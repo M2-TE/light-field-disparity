@@ -17,5 +17,6 @@ bin/
 .vscode/
 
 # outputs from .hlsl shaders
+shaders.hpp
 *_vs.hpp
 *_ps.hpp
