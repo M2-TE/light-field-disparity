@@ -8,12 +8,23 @@ public:
 	void init(vk::Instance& instance, vk::SurfaceKHR& surface) {
 		VMI_LOG("[Initializing] Device manager...");
 		std::vector<vk::PhysicalDevice> physicalDevices = instance.enumeratePhysicalDevices();
-		if (physicalDevices.empty()) VMI_ERR("Failed to find GPUs with Vulkan support.");
+		if (physicalDevices.empty()) VMI_ERR("Failed to find a GPUs with Vulkan support.");
+
+		// query device details
+		std::string spacing = "    ";
+		VMI_LOG(spacing << "Available devices:");
 		devices.reserve(physicalDevices.size());
-		for (vk::PhysicalDevice& physicalDevice : physicalDevices) devices.emplace_back(physicalDevice, surface);
+		for (vk::PhysicalDevice physicalDevice : physicalDevices) {
+			devices.emplace_back(physicalDevice, surface);
+			VMI_LOG(spacing << "- " << devices.back().deviceProperties.deviceName);
+		}
 
 		pick_best_physical_device(surface);
+		VMI_LOG(spacing << "Chosen device:");
+		VMI_LOG(spacing << "- " << devices[iCurrentDevice].deviceProperties.deviceName << "\n");
+		
 		get_device_wrapper().create_logical_device();
+
 	}
 	void destroy() {
 		get_device_wrapper().destroy_logical_device();
