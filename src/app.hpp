@@ -16,7 +16,7 @@ public:
 
 		window.init(512, 512);
 		deviceManager.init(window.get_vulkan_instance(), window.get_vulkan_surface());
-		renderer.init(deviceManager.get_logical_device(), window);
+		renderer.init(deviceManager.get_device_wrapper(), window);
 		VMI_LOG("[Initialization Complete]" << std::endl);
 	}
 	~Application() {
