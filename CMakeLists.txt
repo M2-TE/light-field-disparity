@@ -26,22 +26,47 @@ set_target_properties(VulkanMemoryAllocator PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+# Build HLSL shaders
+add_custom_target(shaders)
+set(HLSL_SHADER_FILES 
+    swapchain_write_vs.hlsl 
+    swapchain_write_ps.hlsl)
+set_source_files_properties(swapchain_write_vs.hlsl PROPERTIES ShaderType "vs")
+set_source_files_properties(swapchain_write_ps.hlsl PROPERTIES ShaderType "ps")
+set_source_files_properties(${HLSL_SHADER_FILES} PROPERTIES ShaderModel "6_0")
+foreach(FILE ${HLSL_SHADER_FILES})
+  get_filename_component(FILE_WE ${FILE} NAME_WE)
+  get_source_file_property(shadertype ${FILE} ShaderType)
+  get_source_file_property(shadermodel ${FILE} ShaderModel)
+  add_custom_command(TARGET shaders
+                     COMMAND dxc -spirv -T ${shadertype}_${shadermodel} -E main src/shaders/${FILE_WE}.hlsl -Fh ${CMAKE_BINARY_DIR}/${FILE_WE}.hpp
+                     # fxc.exe /nologo /Emain /T${shadertype}_${shadermodel} 
+                     # $<IF:$<CONFIG:DEBUG>,/Od,/O1> /Zi /Fo ${CMAKE_BINARY_DIR}/${FILE_WE}.cso 
+                     # /Fd ${CMAKE_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
+                     
+                     MAIN_DEPENDENCY ${FILE}
+                     COMMENT "HLSL ${FILE}"
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     VERBATIM)
+endforeach(FILE)
+
 # compile lightfields as executable
-add_executable(lightfields)
-target_precompile_headers(lightfields 
+add_executable(${PROJECT_NAME})
+add_dependencies(${PROJECT_NAME} shaders)
+target_precompile_headers(${PROJECT_NAME} 
     PRIVATE src/pch/pch.hpp)
-target_sources(lightfields 
+target_sources(${PROJECT_NAME} 
     PRIVATE src/pch/pch.cpp
     PRIVATE src/main.cpp)
-target_include_directories(lightfields
+target_include_directories(${PROJECT_NAME}
     PRIVATE src
     PUBLIC ext/imgui
     PUBLIC ext/vma/include
     PUBLIC ext/vma/VulkanMemoryAllocator/include
     PUBLIC ${SDL2_INCLUDE_DIRS})
-target_link_libraries(lightfields 
+target_link_libraries(${PROJECT_NAME} 
     ${Vulkan_LIBRARIES}
     ${SDL2_LIBRARIES}
     imgui
     VulkanMemoryAllocator)
-install(TARGETS lightfields DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

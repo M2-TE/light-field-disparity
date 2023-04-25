@@ -15,3 +15,7 @@ _deps
 [Bb]uild/
 bin/
 .vscode/
+
+# outputs from .hlsl shaders
+*_vs.hpp
+*_ps.hpp

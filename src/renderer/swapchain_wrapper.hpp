@@ -26,9 +26,12 @@ public:
 		}
 	}
 
-	SyncFrame& get_sync_frame() {
-		return syncFrames[curSyncFrame];
-	}
+	inline SyncFrame& get_sync_frame() { return syncFrames[curSyncFrame]; }
+	inline vk::ImageView& get_image_view(uint32_t i) { return imageViews[i]; }
+	inline uint32_t get_image_count() { return images.size(); }
+	inline vk::Extent2D get_extent() { return extent; }
+	inline vk::SurfaceFormatKHR get_surface_format() { return surfaceFormat; }
+
 	uint32_t acquire_next_image(vk::Device device) {
 
 		// get next frame of sync array
