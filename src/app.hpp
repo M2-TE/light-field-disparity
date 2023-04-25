@@ -8,8 +8,7 @@
 class Application
 {
 public:
-	Application()
-	{
+	Application() {
 		VMI_LOG("[Initializing] Independent vulkan functions...");
 		vk::DynamicLoader dl;
 		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
@@ -17,12 +16,12 @@ public:
 
 		window.init(512, 512);
 		deviceManager.init(window.get_vulkan_instance(), window.get_vulkan_surface());
-		// renderer.init(deviceManager.get_device_wrapper(), window, std::string("lightfields/").append(mainFolder).append(subFolder).c_str());
+		renderer.init(deviceManager.get_logical_device(), window);
 		VMI_LOG("[Initialization Complete]" << std::endl);
 	}
 	~Application() {
 		deviceManager.get_logical_device().waitIdle();
-		// renderer.destroy(deviceManager.get_device_wrapper(), scene.reg);
+		renderer.destroy(deviceManager.get_logical_device());
 
 		deviceManager.destroy();
 		window.destroy();
@@ -30,14 +29,12 @@ public:
 	// ROF_COPY_MOVE_DELETE(Application)
 
 public:
-	void run()
-	{
+	void run() {
 		while (update()) {}
 	}
 
 private:
-	bool update()
-	{
+	bool update() {
 		// ImGui begin
 		//ImGui_ImplVulkan_NewFrame();
 		//ImGui_ImplSDL2_NewFrame();
@@ -50,8 +47,8 @@ private:
 
 		return true;
 	}
-	bool poll_inputs()
-	{
+
+	bool poll_inputs() {
 		input.flush();
 		SDL_Event sdlEvent;
 		while (SDL_PollEvent(&sdlEvent)) {
@@ -85,4 +82,5 @@ private:
 	Window window;
 	Input input;
 	DeviceManager deviceManager;
+	Renderer renderer;
 };

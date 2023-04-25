@@ -14,8 +14,7 @@ public:
 		assign_queue_family_index(surface);
 	}
 
-	int32_t get_device_score() 
-	{
+	int32_t get_device_score() {
 		int32_t deviceScore = 0;
 
 		// Discrete GPUs have a significant performance advantage
@@ -28,8 +27,7 @@ public:
 		else if (formats.empty() || presentModes.empty()) return -1;
 		else return deviceScore;
 	}
-	void create_logical_device()
-	{
+	void create_logical_device() {
 		std::string spacing = "    ";
 		VMI_LOG(spacing << "Required device extensions:");
 		std::vector<const char*> requiredDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
@@ -122,8 +120,7 @@ public:
 	void destroy_logical_device() { logicalDevice.destroy(); }
 
 private:
-	void assign_queue_family_index(vk::SurfaceKHR& surface)
-	{
+	void assign_queue_family_index(vk::SurfaceKHR& surface) {
 		// find a queue family that supports both graphics and presentation
 		std::vector<vk::QueueFamilyProperties> queueFamilies = physicalDevice.getQueueFamilyProperties();
 
@@ -167,8 +164,7 @@ private:
 			}
 		}
 	}
-	void query_swapchain_support_details(vk::SurfaceKHR& surface)
-	{
+	void query_swapchain_support_details(vk::SurfaceKHR& surface) {
 		capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
 		formats = physicalDevice.getSurfaceFormatsKHR(surface);
 		presentModes = physicalDevice.getSurfacePresentModesKHR(surface);

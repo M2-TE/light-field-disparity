@@ -11,8 +11,7 @@ public:
 	// ROF_COPY_MOVE_DELETE(Window)
 
 public:
-	void init(int32_t width, int32_t height)
-	{
+	void init(int32_t width, int32_t height) {
 		VMI_LOG("[Initializing] SDL window...");
 		init_sdl_window(width, height);
 		SDL_version version;
@@ -34,8 +33,7 @@ public:
 		// std::string imguiVer = ImGui::GetVersion();
 		// VMI_LOG(spacing << "ImGui version: " << imguiVer);
 	}
-	void destroy()
-	{
+	void destroy() {
 		// ImGui_ImplSDL2_Shutdown();
 		// ImGui::DestroyContext();
 
@@ -52,8 +50,7 @@ public:
 	SDL_Window* get_window() { return pWindow; }
 
 private:
-	void init_sdl_window(int32_t width, int32_t height)
-	{
+	void init_sdl_window(int32_t width, int32_t height) {
 		// Create an SDL window that supports Vulkan rendering.
 		if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) VMI_SDL_ERR();
 		pWindow = SDL_CreateWindow(WND_NAME.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
@@ -61,8 +58,7 @@ private:
 			SDL_WINDOW_VULKAN);
 		if (pWindow == NULL) VMI_SDL_ERR();
 	}
-	void create_vulkan_instance()
-	{
+	void create_vulkan_instance() {
 		uint32_t apiVersion = VK_API_VERSION_1_1;
 		std::string spacing = "    ";
 		VMI_LOG(spacing << "Vulkan API version: 1.1");
@@ -76,10 +72,11 @@ private:
 			VMI_LOG("");
 		}
 
+
 		// Get WSI extensions from SDL
 		uint32_t nExtensions;
 		if (!SDL_Vulkan_GetInstanceExtensions(pWindow, &nExtensions, NULL)) VMI_SDL_ERR();
-		extensions.resize(nExtensions);
+		std::vector<const char*> extensions(nExtensions);
 		if (!SDL_Vulkan_GetInstanceExtensions(pWindow, &nExtensions, extensions.data())) VMI_SDL_ERR();
 
 		// Debug Logging:
@@ -98,6 +95,7 @@ private:
 			.setApiVersion(VK_API_VERSION_1_1);
 
 		// Use validation layer on debug
+		std::vector<const char*> layers;
 		DEBUG_ONLY(layers.push_back("VK_LAYER_KHRONOS_validation"));
 
 		// Create instance info
@@ -118,8 +116,7 @@ private:
 		DEBUG_ONLY(dld.init(instance, vkGetInstanceProcAddr));
 		DEBUG_ONLY(debugMessenger = instance.createDebugUtilsMessengerEXT(messengerInfo, nullptr, dld));
 	}
-	void create_vulkan_surface()
-	{
+	void create_vulkan_surface() {
 		// Create a Vulkan surface for rendering
 		VkSurfaceKHR c_surface;
 		if (!SDL_Vulkan_CreateSurface(pWindow, static_cast<VkInstance>(instance), &c_surface)) VMI_SDL_ERR();
@@ -132,9 +129,6 @@ private:
 	vk::SurfaceKHR surface;
 	DEBUG_ONLY(vk::DispatchLoaderDynamic dld);
 	DEBUG_ONLY(vk::DebugUtilsMessengerEXT debugMessenger);
-
-	std::vector<const char*> layers;
-	std::vector<const char*> extensions;
 
 	// lazy constants (settings?)
 	const std::string WND_NAME = "Light Field Disparity";

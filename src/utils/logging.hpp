@@ -22,7 +22,7 @@ public:
 		return VK_FALSE;
 	}
 
-	static vk::DebugUtilsMessengerCreateInfoEXT SetupDebugMessenger(std::vector<const char*>& extensions)
+	static vk::DebugUtilsMessengerCreateInfoEXT SetupDebugMessenger(std::vector<const char*>& extensions) 
 	{
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 

@@ -9,8 +9,7 @@ public:
 
 public:
 	// per-frame
-	void flush()
-	{
+	void flush() {
 		xMouseRel = yMouseRel = 0;
 		keysPressed.clear();
 		keysReleased.clear();
@@ -18,28 +17,24 @@ public:
 		mouseButtonsReleased.clear();
 	}
 	// e.g. on window exit
-	void flush_all()
-	{
+	void flush_all() {
 		flush();
 		keysDown.clear();
 		mouseButtonsDown.clear();
 	}
 
 	// keyboard
-	void register_keyboard_event(SDL_KeyboardEvent keyEvent)
-	{
+	void register_keyboard_event(SDL_KeyboardEvent keyEvent) {
 		// do not register repeat inputs and ignore when imgui already consumes them
 		if (keyEvent.repeat /**|| ImGui::GetIO().WantCaptureKeyboard**/) return;
 
 		switch (keyEvent.type) {
-			case SDL_KEYDOWN:
-			{
+			case SDL_KEYDOWN: {
 				keysPressed.insert(keyEvent.keysym.sym);
 				keysDown.insert(keyEvent.keysym.sym);
 				break;
 			}
-			case SDL_KEYUP:
-			{
+			case SDL_KEYUP: {
 				keysReleased.insert(keyEvent.keysym.sym);
 				keysDown.erase(keyEvent.keysym.sym);
 				break;
@@ -48,28 +43,24 @@ public:
 	}
 	
 	// mouse
-	void register_mouse_button_event(SDL_MouseButtonEvent mbEvent)
-	{
+	void register_mouse_button_event(SDL_MouseButtonEvent mbEvent) {
 		// ignore mouse inputs when imgui wants to capture
 		//if (ImGui::GetIO().WantCaptureMouse) return;
 
 		switch (mbEvent.type) {
-			case SDL_MOUSEBUTTONDOWN:
-			{
+			case SDL_MOUSEBUTTONDOWN: {
 				mouseButtonsPressed.insert(mbEvent.button);
 				mouseButtonsDown.insert(mbEvent.button);
 				break;
 			}
-			case SDL_MOUSEBUTTONUP:
-			{
+			case SDL_MOUSEBUTTONUP: {
 				mouseButtonsReleased.insert(mbEvent.button);
 				mouseButtonsDown.erase(mbEvent.button);
 				break;
 			}
 		}
 	}
-	void register_mouse_motion_event(SDL_MouseMotionEvent mmEvent)
-	{
+	void register_mouse_motion_event(SDL_MouseMotionEvent mmEvent) {
 		xMouseRel += mmEvent.xrel;
 		yMouseRel += mmEvent.yrel;
 		xMouse += mmEvent.xrel;

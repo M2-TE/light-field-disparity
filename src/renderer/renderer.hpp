@@ -1,9 +1,11 @@
 class Renderer 
 {
 public:
-    void init() 
-    {
+    void init(vk::Device device, Window& window) {
 		VMI_LOG("[Initializing] Renderer...");
+    }
+    void destroy(vk::Device device) {
+        // TODO
     }
 
 public:
