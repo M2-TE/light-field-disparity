@@ -21,12 +21,11 @@ public:
 	}
 	~Application() {
 		deviceManager.get_logical_device().waitIdle();
-		renderer.destroy(deviceManager.get_logical_device());
+		renderer.destroy(deviceManager.get_device_wrapper());
 
 		deviceManager.destroy();
 		window.destroy();
 	}
-	// ROF_COPY_MOVE_DELETE(Application)
 
 public:
 	void run() {
@@ -41,6 +40,7 @@ private:
 		//ImGui::NewFrame();
 
 		if (!poll_inputs()) return false;
+		renderer.render(deviceManager.get_device_wrapper());
 		
 		// ImGui end
 		//ImGui::EndFrame();
