@@ -1,7 +1,9 @@
 #pragma once
 
-#include "window.hpp"
-#include "input.hpp"
+#include "window/window.hpp"
+#include "window/input.hpp"
+#include "device/device_manager.hpp"
+#include "renderer/renderer.hpp"
 
 class Application
 {
@@ -14,19 +16,15 @@ public:
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
 		window.init(512, 512);
-		// deviceManager.init(window.get_vulkan_instance(), window.get_vulkan_surface());
+		deviceManager.init(window.get_vulkan_instance(), window.get_vulkan_surface());
 		// renderer.init(deviceManager.get_device_wrapper(), window, std::string("lightfields/").append(mainFolder).append(subFolder).c_str());
-		// scene.init();
 		VMI_LOG("[Initialization Complete]" << std::endl);
 	}
-	~Application()
-	{
-		// deviceManager.get_logical_device().waitIdle();
-
-		// scene.destroy();
+	~Application() {
+		deviceManager.get_logical_device().waitIdle();
 		// renderer.destroy(deviceManager.get_device_wrapper(), scene.reg);
 
-		// deviceManager.destroy();
+		deviceManager.destroy();
 		window.destroy();
 	}
 	// ROF_COPY_MOVE_DELETE(Application)
@@ -86,4 +84,5 @@ private:
 private:
 	Window window;
 	Input input;
+	DeviceManager deviceManager;
 };
