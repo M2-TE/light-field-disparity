@@ -1,9 +1,9 @@
 #include "swapchain_wrapper.hpp"
 #include "image_wrapper.hpp"
+#include "render_passes/swapchain_write.hpp"
 // #include "uniform_buffer.hpp"
 // #include "imgui_wrapper.hpp"
 
-#include "render_passes/swapchain_write.hpp"
 
 class Renderer 
 {
@@ -15,13 +15,13 @@ public:
 		create_descriptor_pools(device);
 
 		swapchain.init(device, window);
-		create_render_pipelines();
+		create_render_pipelines(device);
 
 		//imguiWrapper.init(device, window, swapchainWriteRenderpass.get_render_pass(), syncFrames);
 	}
 	void destroy(DeviceWrapper& device)
 	{
-		destroy_render_pipelines();
+		destroy_render_pipelines(device);
 		swapchain.destroy(device);
 
 		device.logicalDevice.destroyCommandPool(transientCommandPool);
@@ -34,11 +34,13 @@ public:
 
 public:
 	void render(DeviceWrapper& device) {
-		// uint32_t iSwapchainImage = swapchain.acquire_next_image(device.logicalDevice);
-		
-		// TODO
+		uint32_t iSwapchainImage = swapchain.acquire_next_image(device.logicalDevice);
+		vk::CommandBuffer commandBuffer = swapchain.record_commands(device, iSwapchainImage);
 
-		// swapchain.present(device, iSwapchainImage);
+		// direct write to swapchain image
+		swapchainWrite.execute(commandBuffer, iSwapchainImage);
+
+		swapchain.present(device, iSwapchainImage);
 	}
 
 private:
@@ -77,11 +79,13 @@ private:
 		descPool = device.logicalDevice.createDescriptorPool(info);
 	}
 
-	void create_render_pipelines() {
-		// TODO
+	void create_render_pipelines(DeviceWrapper& device) {
+		disparityImage.init(device, swapchain, allocator);
+		swapchainWrite.init(device, swapchain, descPool, disparityImage);
 	}
-	void destroy_render_pipelines() {
-		// TODO
+	void destroy_render_pipelines(DeviceWrapper& device) {
+		swapchainWrite.destroy(device);
+		disparityImage.destroy(device, allocator);
 	}
 
 private:
@@ -89,13 +93,10 @@ private:
 	SwapchainWrapper swapchain;
 	// ImguiWrapper imguiWrapper;
 
-	// Lightfield lightfield;
-	// ForwardRenderpass forwardRenderpass;
-	// GradientsRenderpass gradientsRenderpass;
-	// DisparityRenderpass disparityRenderpass;
-	// SwapchainWrite swapchainWriteRenderpass;
+	SwapchainWrite swapchainWrite;
+	ImageWrapper disparityImage = { vk::Format::eR32Sfloat };
 
-	// RingBuffer<SyncFrameData> syncFrames;
+
 	vk::CommandPool transientCommandPool;
 	vk::CommandPool transferCommandPool;
 	vk::DescriptorPool descPool;

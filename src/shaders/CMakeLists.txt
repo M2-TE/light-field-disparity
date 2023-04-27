@@ -1,4 +1,4 @@
-# Build HLSL shaders
+# provide target for building shaders
 add_custom_target(shaders)
 
 # gather all HLSL shader files
@@ -12,9 +12,8 @@ set_source_files_properties(${HLSL_PS_FILES} PROPERTIES ShaderType "ps") # mark 
 set_source_files_properties(${HLSL_FILES} PROPERTIES ShaderModel "6_0") # the shader model to be used
 
 # create and initialize main shader header
-set(SHADER_MASTER shaders.hpp)
 add_custom_command(TARGET shaders
-    COMMAND echo "#pragma once" > ${SHADER_MASTER}
+    COMMAND cp shader_wrapper.hpp shaders.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     VERBATIM)
 
@@ -26,8 +25,8 @@ foreach(FILE ${HLSL_FILES})
     add_custom_command(TARGET shaders
         # compile hlsl to spir-v
         COMMAND dxc -spirv -T ${shadertype}_${shadermodel} -E main ${FILE_WE}.hlsl -Fh ${CMAKE_BINARY_DIR}/${FILE_WE}.hpp -Vn ${FILE_WE}
-        # collect all headers in one giant header
-        COMMAND echo "#include <${CMAKE_BINARY_DIR}/${FILE_WE}.hpp>" >> ${SHADER_MASTER} 
+        # include in main shader header
+        COMMAND echo "#include <${CMAKE_BINARY_DIR}/${FILE_WE}.hpp>" >> shaders.hpp
         MAIN_DEPENDENCY ${CMAKE_BINARY_DIR}/${FILE_WE}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         VERBATIM)

@@ -59,7 +59,6 @@ private:
 		if (pWindow == NULL) VMI_SDL_ERR();
 	}
 	void create_vulkan_instance() {
-		uint32_t apiVersion = VK_API_VERSION_1_1;
 		std::string spacing = "    ";
 		VMI_LOG(spacing << "Vulkan API version: 1.1");
 
@@ -92,7 +91,7 @@ private:
 			.setApplicationVersion(VK_MAKE_API_VERSION(0, 0, 1, 0))
 			.setPEngineName("Vermillion")
 			.setEngineVersion(VK_MAKE_API_VERSION(0, 0, 1, 0))
-			.setApiVersion(VK_API_VERSION_1_1);
+			.setApiVersion(apiVersion);
 
 		// Use validation layer on debug
 		std::vector<const char*> layers;
@@ -132,4 +131,5 @@ private:
 
 	// lazy constants (settings?)
 	const std::string WND_NAME = "Light Field Disparity";
+	const uint32_t apiVersion = VK_API_VERSION_1_3;
 };

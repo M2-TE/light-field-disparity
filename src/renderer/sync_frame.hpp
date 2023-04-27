@@ -10,10 +10,10 @@ public:
 	}
 	void destroy(DeviceWrapper& device)
 	{
-		// device.logicalDevice.destroySemaphore(imageAvailable);
-		// device.logicalDevice.destroySemaphore(renderFinished);
-		// device.logicalDevice.destroyFence(commandBufferFence);
-		// device.logicalDevice.destroyCommandPool(commandPool);
+		device.logicalDevice.destroySemaphore(imageAvailable);
+		device.logicalDevice.destroySemaphore(renderFinished);
+		device.logicalDevice.destroyFence(commandBufferFence);
+		device.logicalDevice.destroyCommandPool(commandPool);
 	}
 
 private:

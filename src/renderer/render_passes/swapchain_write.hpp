@@ -9,25 +9,23 @@ public:
 	~SwapchainWrite() = default;
 
 public:
-	void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vk::DescriptorPool& descPool, vk::ImageView& input)
-	{
+	void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vk::DescriptorPool descPool, ImageWrapper& inputImage) {
 		create_shader_modules(device);
-		create_render_pass(device, swapchain);
-		create_framebuffer(device, swapchain, input);
+		create_render_pass(device, swapchain, inputImage);
+		create_framebuffer(device, swapchain, inputImage);
 
 		create_desc_set_layout(device);
-		create_desc_set(device, descPool, input);
+		create_desc_set(device, descPool, inputImage);
 
 		create_pipeline_layout(device);
 		create_pipeline(device, swapchain);
 
 		fullscreenRect = vk::Rect2D({ 0, 0 }, swapchain.get_extent());
 	}
-	void destroy(DeviceWrapper& device)
-	{
+	void destroy(DeviceWrapper& device) {
 		// Shaders
-		// device.destroyShaderModule(vs);
-		// device.destroyShaderModule(ps);
+		device.logicalDevice.destroyShaderModule(vs);
+		device.logicalDevice.destroyShaderModule(ps);
 
 		// Render Pass
 		device.logicalDevice.destroyRenderPass(renderPass);
@@ -43,8 +41,7 @@ public:
 		device.logicalDevice.destroyDescriptorSetLayout(descSetLayout);
 	}
 
-	void execute(vk::CommandBuffer& commandBuffer, uint32_t iFrame)
-	{
+	void execute(vk::CommandBuffer commandBuffer, uint32_t iFrame) {
 		vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 			.setRenderPass(renderPass)
 			.setFramebuffer(framebuffers[iFrame])
@@ -58,35 +55,28 @@ public:
 		commandBuffer.draw(3, 1, 0, 0);
 
 		// write imgui ui to the output image
-		ImGui::Render();
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+		// ImGui::Render();
+		// ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
 		commandBuffer.endRenderPass();
 	}
 
-	inline vk::RenderPass& get_render_pass()
-	{
-		return renderPass;
-	}
-
 private:
-	void create_shader_modules(DeviceWrapper& device)
-	{
-		// vs = create_shader_module(device, swapchainWrite.vs);
-		// ps = create_shader_module(device, swapchainWrite.ps);
+	void create_shader_modules(DeviceWrapper& device) {
+		vs = create_shader_module(device, swapchain_write_vs, sizeof(swapchain_write_vs));
+		ps = create_shader_module(device, swapchain_write_ps, sizeof(swapchain_write_ps));
 	}
-	void create_render_pass(DeviceWrapper& device, SwapchainWrapper& swapchain)
-	{
+	void create_render_pass(DeviceWrapper& device, SwapchainWrapper& swapchain, ImageWrapper& inputImage) {
+		VMI_LOG("TODO: define image layout of swapchain write input");
 		std::array<vk::AttachmentDescription, 2> attachments = {
-			// Input
 			vk::AttachmentDescription()
-				.setFormat(vk::Format::eR8G8B8A8Srgb)
+				.setFormat(inputImage.colorFormat)
 				.setSamples(vk::SampleCountFlagBits::e1)
 				.setLoadOp(vk::AttachmentLoadOp::eLoad)
 				.setStoreOp(vk::AttachmentStoreOp::eDontCare)
 				.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
 				.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-				.setInitialLayout(vk::ImageLayout::eColorAttachmentOptimal)
+				.setInitialLayout(vk::ImageLayout::eUndefined)
 				.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal),
 			// Output
 			vk::AttachmentDescription()
@@ -106,9 +96,8 @@ private:
 		vk::SubpassDescription subpass = vk::SubpassDescription()
 			.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
 			.setPDepthStencilAttachment(nullptr)
-			.setInputAttachments(input).setColorAttachments(output)
-			// misc other:
-			.setPreserveAttachmentCount(0).setPPreserveAttachments(nullptr).setPResolveAttachments(nullptr);
+			.setInputAttachments(input)
+			.setColorAttachments(output);
 
 		// Subpass dependency
 		vk::SubpassDependency dependency = vk::SubpassDependency()
@@ -129,30 +118,25 @@ private:
 
 		renderPass = device.logicalDevice.createRenderPass(renderPassInfo);
 	}
-	void create_framebuffer(DeviceWrapper& device, SwapchainWrapper& swapchain, vk::ImageView& input)
-	{
-		std::array<vk::ImageView, 2> attachments = { input, VK_NULL_HANDLE };
-
+	void create_framebuffer(DeviceWrapper& device, SwapchainWrapper& swapchain, ImageWrapper& inputImage) {
+		std::array<vk::ImageView, 2> imageViews = { inputImage.get_image_view(), VK_NULL_HANDLE };
 		// create one framebuffer for each potential image view output
         uint32_t nSwapchainImages = swapchain.get_image_count();
 		framebuffers.resize(nSwapchainImages);
 		for (size_t i = 0; i < nSwapchainImages; i++) {
-
-			attachments[1] = swapchain.get_image_view(i);
-
+			imageViews[1] = swapchain.get_image_view(i);
 			vk::FramebufferCreateInfo framebufferInfo = vk::FramebufferCreateInfo()
 				.setRenderPass(renderPass)
 				.setWidth(swapchain.get_extent().width)
 				.setHeight(swapchain.get_extent().height)
-				.setAttachments(attachments)
+				.setAttachments(imageViews)
 				.setLayers(1);
 
 			framebuffers[i] = device.logicalDevice.createFramebuffer(framebufferInfo);
 		}
 	}
 
-	void create_desc_set_layout(DeviceWrapper& device)
-	{
+	void create_desc_set_layout(DeviceWrapper& device) {
 		vk::DescriptorSetLayoutBinding setLayoutBinding = vk::DescriptorSetLayoutBinding()
 			.setBinding(0)
 			.setDescriptorCount(1)
@@ -165,8 +149,7 @@ private:
 
 		descSetLayout = device.logicalDevice.createDescriptorSetLayout(createInfo);
 	}
-	void create_desc_set(DeviceWrapper& device, vk::DescriptorPool& descPool, vk::ImageView& imageView)
-	{
+	void create_desc_set(DeviceWrapper& device, vk::DescriptorPool descPool, ImageWrapper& inputImage) {
 		// allocate the descriptor sets using descriptor pool
 		vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
 			.setDescriptorPool(descPool)
@@ -175,7 +158,7 @@ private:
 
 		vk::DescriptorImageInfo descriptor = vk::DescriptorImageInfo()
 			.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-			.setImageView(imageView)
+			.setImageView(inputImage.get_image_view())
 			.setSampler(nullptr);
 
 		// input image
@@ -192,15 +175,13 @@ private:
 		device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
 	}
 
-	void create_pipeline_layout(DeviceWrapper& device)
-	{
+	void create_pipeline_layout(DeviceWrapper& device) {
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
 			.setSetLayouts(descSetLayout)
 			.setPushConstantRangeCount(0).setPushConstantRanges(nullptr);
 		pipelineLayout = device.logicalDevice.createPipelineLayout(pipelineLayoutInfo);
 	}
-	void create_pipeline(DeviceWrapper& device, SwapchainWrapper& swapchain)
-	{
+	void create_pipeline(DeviceWrapper& device, SwapchainWrapper& swapchain) {
 		// Shaders
 		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages;
 		{

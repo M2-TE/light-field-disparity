@@ -16,6 +16,7 @@ public:
 		create_swapchain(device, window);
 		create_images(device);
 		create_image_views(device);
+		create_sync_frames(device);
 	}
 	void destroy(DeviceWrapper& device) {
 		device.logicalDevice.destroySwapchainKHR(swapchain);
@@ -49,11 +50,50 @@ public:
 
 		return imgResult.value;
 	}
+	vk::CommandBuffer record_commands(DeviceWrapper& device, uint32_t iSwapchainImage) {
+
+		// wait for fence of fetched frame before rendering to it
+		SyncFrame& syncFrame = syncFrames[curSyncFrame];
+		vk::Result result = device.logicalDevice.waitForFences(syncFrame.commandBufferFence, VK_TRUE, UINT64_MAX);
+		if (result != vk::Result::eSuccess) assert(false);
+		
+		// and reset it
+		device.logicalDevice.resetFences(syncFrame.commandBufferFence);
+
+		// reset command pool and then record into it (using command buffer)
+		device.logicalDevice.resetCommandPool(syncFrame.commandPool);
+
+		// setting up command buffer
+		vk::CommandBufferBeginInfo beginInfo = vk::CommandBufferBeginInfo()
+			.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit)
+			.setPInheritanceInfo(nullptr);
+		syncFrame.commandBuffer.begin(beginInfo);
+
+		return syncFrame.commandBuffer;
+	}
 	void present(DeviceWrapper& device, uint32_t iFrame) {
+		SyncFrame& syncFrame = syncFrames[curSyncFrame];
+
+		// finalize command buffer
+		syncFrame.commandBuffer.end();
+
+		// Render (submit commands)
+		vk::PipelineStageFlags waitStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		vk::SubmitInfo submitInfo = vk::SubmitInfo()
+			.setPWaitDstStageMask(&waitStages)
+			// semaphores
+			.setWaitSemaphoreCount(1).setPWaitSemaphores(&syncFrame.imageAvailable)
+			.setSignalSemaphoreCount(1).setPSignalSemaphores(&syncFrame.renderFinished)
+			// command buffers
+			.setCommandBufferCount(1).setPCommandBuffers(&syncFrame.commandBuffer);
+
+		device.queue.submit(submitInfo, syncFrame.commandBufferFence);
+
+		// Present
 		vk::PresentInfoKHR presentInfo = vk::PresentInfoKHR()
 			.setPImageIndices(&iFrame)
 			// semaphores
-			.setWaitSemaphoreCount(1).setPWaitSemaphores(&syncFrames[curSyncFrame].renderFinished)
+			.setWaitSemaphoreCount(1).setPWaitSemaphores(&syncFrame.renderFinished)
 			// swapchains
 			.setSwapchainCount(1).setPSwapchains(&swapchain);
 
