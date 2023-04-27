@@ -27,6 +27,7 @@ public:
 		}
 	}
 
+
 	inline SyncFrame& get_sync_frame() { return syncFrames[curSyncFrame]; }
 	inline vk::ImageView& get_image_view(uint32_t i) { return imageViews[i]; }
 	inline uint32_t get_image_count() { return images.size(); }
@@ -129,6 +130,7 @@ private:
 		}
 
 		// settle with fifo present mode should the requested one not be available
+		VMI_LOG("Requested present mode is not available");
 		presentMode = vk::PresentModeKHR::eFifo;
 	}
 	void choose_extent(DeviceWrapper& device, Window& window) {

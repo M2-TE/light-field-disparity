@@ -27,15 +27,15 @@ public:
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
 
 		VMI_LOG("[Initializing] ImGui...");
-		// ImGui::CreateContext();
-		// ImGui_ImplSDL2_InitForVulkan(pWindow);
-		// ImGui::StyleColorsDark();
-		// std::string imguiVer = ImGui::GetVersion();
-		// VMI_LOG(spacing << "ImGui version: " << imguiVer);
+		ImGui::CreateContext();
+		ImGui_ImplSDL2_InitForVulkan(pWindow);
+		ImGui::StyleColorsDark();
+		std::string imguiVer = ImGui::GetVersion();
+		VMI_LOG(spacing << "ImGui version: " << imguiVer);
 	}
 	void destroy() {
-		// ImGui_ImplSDL2_Shutdown();
-		// ImGui::DestroyContext();
+		ImGui_ImplSDL2_Shutdown();
+		ImGui::DestroyContext();
 
 		SDL_DestroyWindow(pWindow);
 		SDL_Quit();

@@ -7,20 +7,20 @@ public:
 	~ImguiWrapper() = default;
 
 public:
-	void init(DeviceWrapper& deviceWrapper, Window& window, vk::RenderPass& renderPass, RingBuffer<SyncFrameData>& syncFrames)
+	void init(DeviceWrapper& device, SwapchainWrapper& swapchain, Window& window, SwapchainWrite& swapchainWrite)
 	{
-		imgui_create_desc_pool(deviceWrapper);
-		imgui_init_vulkan(deviceWrapper, window, renderPass, syncFrames);
-		imgui_upload_fonts(deviceWrapper, syncFrames);
+		imgui_create_desc_pool(device);
+		imgui_init_vulkan(device, swapchain, window, swapchainWrite);
+		imgui_upload_fonts(device, swapchain);
 	}
-	void destroy(DeviceWrapper& deviceWrapper)
+	void destroy(DeviceWrapper& device)
 	{
-		deviceWrapper.logicalDevice.destroyDescriptorPool(descPool);
+		device.logicalDevice.destroyDescriptorPool(descPool);
 		ImGui_ImplVulkan_Shutdown();
 	}
 
 private:
-	void imgui_create_desc_pool(DeviceWrapper& deviceWrapper)
+	void imgui_create_desc_pool(DeviceWrapper& device)
 	{
 		uint32_t descCountImgui = 1000;
 		std::array<vk::DescriptorPoolSize, 11> poolSizes =
@@ -44,30 +44,30 @@ private:
 			.setPoolSizeCount((uint32_t)poolSizes.size())
 			.setPPoolSizes(poolSizes.data());
 
-		descPool = deviceWrapper.logicalDevice.createDescriptorPool(info);
+		descPool = device.logicalDevice.createDescriptorPool(info);
 	}
-	void imgui_init_vulkan(DeviceWrapper& deviceWrapper, Window& window, vk::RenderPass& renderPass, RingBuffer<SyncFrameData>& syncFrames)
+	void imgui_init_vulkan(DeviceWrapper& device, SwapchainWrapper& swapchain, Window& window, SwapchainWrite& swapchainWrite)
 	{
 		struct ImGui_ImplVulkan_InitInfo info = { 0 };
 		info.Instance = window.get_vulkan_instance();
-		info.PhysicalDevice = deviceWrapper.physicalDevice;
-		info.Device = deviceWrapper.logicalDevice;
-		info.QueueFamily = deviceWrapper.iQueue;
-		info.Queue = deviceWrapper.queue;
+		info.PhysicalDevice = device.physicalDevice;
+		info.Device = device.logicalDevice;
+		info.QueueFamily = device.iQueue;
+		info.Queue = device.queue;
 		info.PipelineCache = nullptr;
 		info.DescriptorPool = descPool;
 		info.Subpass = 0;
-		info.MinImageCount = syncFrames.get_size();
-		info.ImageCount = syncFrames.get_size();
+		info.MinImageCount = swapchain.get_image_count();
+		info.ImageCount = swapchain.get_image_count();
 		info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-		ImGui_ImplVulkan_Init(&info, renderPass);
+		ImGui_ImplVulkan_Init(&info, swapchainWrite.get_render_pass());
 	}
-	void imgui_upload_fonts(DeviceWrapper& deviceWrapper, RingBuffer<SyncFrameData>& syncFrames)
+	void imgui_upload_fonts(DeviceWrapper& device, SwapchainWrapper& swapchain)
 	{
-		SyncFrameData& syncFrame = syncFrames.get_next();
+		SyncFrame& syncFrame = swapchain.get_sync_frame();
 		vk::CommandBuffer commandBuffer = syncFrame.commandBuffer;
-		deviceWrapper.logicalDevice.resetCommandPool(syncFrame.commandPool);
+		device.logicalDevice.resetCommandPool(syncFrame.commandPool);
 
 		vk::CommandBufferBeginInfo beginInfo = vk::CommandBufferBeginInfo()
 			.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -80,9 +80,9 @@ private:
 		vk::SubmitInfo submitInfo = vk::SubmitInfo()
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&commandBuffer);
-		deviceWrapper.queue.submit(submitInfo);
+		device.queue.submit(submitInfo);
 
-		deviceWrapper.logicalDevice.waitIdle();
+		device.logicalDevice.waitIdle();
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 

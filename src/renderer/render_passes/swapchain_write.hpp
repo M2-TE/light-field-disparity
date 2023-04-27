@@ -40,7 +40,6 @@ public:
 		// descriptors
 		device.logicalDevice.destroyDescriptorSetLayout(descSetLayout);
 	}
-
 	void execute(vk::CommandBuffer commandBuffer, uint32_t iFrame) {
 		vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 			.setRenderPass(renderPass)
@@ -55,12 +54,13 @@ public:
 		commandBuffer.draw(3, 1, 0, 0);
 
 		// write imgui ui to the output image
-		// ImGui::Render();
-		// ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+		ImGui::Render();
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
 		commandBuffer.endRenderPass();
 	}
 
+	vk::RenderPass get_render_pass() { return renderPass; }
 private:
 	void create_shader_modules(DeviceWrapper& device) {
 		vs = create_shader_module(device, swapchain_write_vs, sizeof(swapchain_write_vs));

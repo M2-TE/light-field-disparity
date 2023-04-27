@@ -1,8 +1,8 @@
 #include "swapchain_wrapper.hpp"
 #include "image_wrapper.hpp"
 #include "render_passes/swapchain_write.hpp"
+#include "imgui_wrapper.hpp"
 // #include "uniform_buffer.hpp"
-// #include "imgui_wrapper.hpp"
 
 
 class Renderer 
@@ -16,8 +16,7 @@ public:
 
 		swapchain.init(device, window);
 		create_render_pipelines(device);
-
-		//imguiWrapper.init(device, window, swapchainWriteRenderpass.get_render_pass(), syncFrames);
+		imgui.init(device, swapchain, window, swapchainWrite);
 	}
 	void destroy(DeviceWrapper& device)
 	{
@@ -28,7 +27,7 @@ public:
 		device.logicalDevice.destroyCommandPool(transferCommandPool);
 		device.logicalDevice.destroyDescriptorPool(descPool);
 
-		// imguiWrapper.destroy(device);
+		imgui.destroy(device);
 		allocator.destroy();
 	}
 
@@ -91,11 +90,10 @@ private:
 private:
 	vma::Allocator allocator;
 	SwapchainWrapper swapchain;
-	// ImguiWrapper imguiWrapper;
 
 	SwapchainWrite swapchainWrite;
 	ImageWrapper disparityImage = { vk::Format::eR32Sfloat };
-
+	ImguiWrapper imgui;
 
 	vk::CommandPool transientCommandPool;
 	vk::CommandPool transferCommandPool;

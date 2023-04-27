@@ -35,15 +35,19 @@ public:
 private:
 	bool update() {
 		// ImGui begin
-		//ImGui_ImplVulkan_NewFrame();
-		//ImGui_ImplSDL2_NewFrame();
-		//ImGui::NewFrame();
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+		
+		ImGui::Begin("Render Info");
+		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
 
 		if (!poll_inputs()) return false;
 		renderer.render(deviceManager.get_device_wrapper());
 		
 		// ImGui end
-		//ImGui::EndFrame();
+		ImGui::EndFrame();
 
 		return true;
 	}
@@ -53,7 +57,7 @@ private:
 		SDL_Event sdlEvent;
 		while (SDL_PollEvent(&sdlEvent)) {
 
-			// ImGui_ImplSDL2_ProcessEvent(&sdlEvent);
+			ImGui_ImplSDL2_ProcessEvent(&sdlEvent);
 
 			switch (sdlEvent.type) {
 				case SDL_QUIT: return false;
