@@ -52,8 +52,8 @@ private:
 		info.Instance = window.get_vulkan_instance();
 		info.PhysicalDevice = device.physicalDevice;
 		info.Device = device.logicalDevice;
-		info.QueueFamily = device.iQueue;
-		info.Queue = device.queue;
+		info.QueueFamily = device.iGraphicsQueue;
+		info.Queue = device.graphicsQueue;
 		info.PipelineCache = nullptr;
 		info.DescriptorPool = descPool;
 		info.Subpass = 0;
@@ -80,7 +80,7 @@ private:
 		vk::SubmitInfo submitInfo = vk::SubmitInfo()
 			.setCommandBufferCount(1)
 			.setPCommandBuffers(&commandBuffer);
-		device.queue.submit(submitInfo);
+		device.graphicsQueue.submit(submitInfo);
 
 		device.logicalDevice.waitIdle();
 		ImGui_ImplVulkan_DestroyFontUploadObjects();

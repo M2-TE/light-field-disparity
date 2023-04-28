@@ -4,7 +4,7 @@ class DeviceWrapper
 {
 public:
 	DeviceWrapper(vk::PhysicalDevice& physicalDevice, vk::SurfaceKHR& surface) :
-		physicalDevice(physicalDevice), iQueue(UINT32_MAX), iTransferQueue(UINT32_MAX)
+		physicalDevice(physicalDevice), iGraphicsQueue(UINT32_MAX), iComputeQueue(UINT32_MAX), iTransferQueue(UINT32_MAX)
 	{
 		physicalDevice.getProperties(&deviceProperties);
 		physicalDevice.getFeatures(&deviceFeatures);
@@ -23,7 +23,7 @@ public:
 		// Maximum possible size of textures affects graphics quality
 		deviceScore += deviceProperties.limits.maxImageDimension2D;
 
-		if (iQueue == UINT32_MAX) return -1; // check for valid queue index
+		if (iGraphicsQueue == UINT32_MAX) return -1; // check for valid queue index
 		else if (formats.empty() || presentModes.empty()) return -1;
 		else return deviceScore;
 	}
@@ -57,62 +57,39 @@ public:
 		vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures();
 		// TODO: set specific features here
 
-		// graphics and transfer share the same family
-		if (iTransferQueue == UINT32_MAX) {
+
+		std::vector<vk::DeviceQueueCreateInfo> queueInfos;
+		queueInfos.reserve(3);
+		float priority = 1.0f;
+		// queueInfos.push_back(vk::DeviceQueueCreateInfo(vk::DeviceQueueCreateFlags(0), iGraphicsQueue, 1, &priority));
+		queueInfos.emplace_back(vk::DeviceQueueCreateFlags(0), iGraphicsQueue, 1, &priority);
+
+		if (iComputeQueue == iGraphicsQueue) {
+			VMI_WARN("No dedicated compute queue family found. Falling back to graphics queue family");
+		} else {
+			queueInfos.emplace_back(vk::DeviceQueueCreateFlags(0), iComputeQueue, 1, &priority);
+		}
+
+		if (iTransferQueue == iGraphicsQueue) {
 			VMI_WARN("No dedicated transfer queue family found. Falling back to graphics queue family");
-			iTransferQueue = iQueue;
-
-			std::array<vk::DeviceQueueCreateInfo, 1> queueInfos;
-			float qPriority = 1.0f;
-			queueInfos[0] = vk::DeviceQueueCreateInfo()
-				.setQueueFamilyIndex(iQueue)
-				.setQueueCount(1)
-				.setPQueuePriorities(&qPriority);
-
-			vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo()
-				// queues
-				.setQueueCreateInfoCount((uint32_t)queueInfos.size()).setPQueueCreateInfos(queueInfos.data())
-				// extensions
-				.setEnabledExtensionCount((uint32_t)requiredDeviceExtensions.size()).setPpEnabledExtensionNames(requiredDeviceExtensions.data())
-				// device features
-				.setPEnabledFeatures(&deviceFeatures);
-
-			// Create logical device
-			logicalDevice = physicalDevice.createDevice(createInfo);
-
-			// get actual handle for graphics queue
-			queue = logicalDevice.getQueue(iQueue, 0u);
-			transferQueue = queue;
+		} else {
+			queueInfos.emplace_back(vk::DeviceQueueCreateFlags(0), iTransferQueue, 1, &priority);
 		}
-		// dedicated transfer queue
-		else {
-			std::array<vk::DeviceQueueCreateInfo, 2> queueInfos;
-			float qPriority = 1.0f;
-			queueInfos[0] = vk::DeviceQueueCreateInfo()
-				.setQueueFamilyIndex(iQueue)
-				.setQueueCount(1)
-				.setPQueuePriorities(&qPriority);
-			float qTransferPriority = 0.9f;
-			queueInfos[1] = vk::DeviceQueueCreateInfo()
-				.setQueueFamilyIndex(iTransferQueue)
-				.setQueueCount(1)
-				.setPQueuePriorities(&qTransferPriority);
+		
 
-			vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo()
-				// queues
-				.setQueueCreateInfoCount((uint32_t)queueInfos.size()).setPQueueCreateInfos(queueInfos.data())
-				// extensions
-				.setEnabledExtensionCount((uint32_t)requiredDeviceExtensions.size()).setPpEnabledExtensionNames(requiredDeviceExtensions.data())
-				// device features
-				.setPEnabledFeatures(&deviceFeatures);
+		vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo()
+			.setEnabledExtensionCount((uint32_t)requiredDeviceExtensions.size()).setPpEnabledExtensionNames(requiredDeviceExtensions.data())
+			.setQueueCreateInfos(queueInfos)
+			.setPEnabledFeatures(&deviceFeatures);
 
-			// Create logical device
-			logicalDevice = physicalDevice.createDevice(createInfo);
+		// Create logical device
+		logicalDevice = physicalDevice.createDevice(createInfo);
 
-			// get actual handle for graphics queue
-			queue = logicalDevice.getQueue(iQueue, 0u);
-			transferQueue = logicalDevice.getQueue(iTransferQueue, 0);
-		}
+		// get actual handles for queues
+		uint index = 0;
+		graphicsQueue = logicalDevice.getQueue(iGraphicsQueue, index++);
+		computeQueue = iComputeQueue == iGraphicsQueue ? graphicsQueue : logicalDevice.getQueue(iComputeQueue, index++);
+		transferQueue = iTransferQueue == iGraphicsQueue ? graphicsQueue : logicalDevice.getQueue(iTransferQueue, index);
 
 		VMI_LOG("[Initializing] Device-specific vulkan functions...");
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(logicalDevice);
@@ -124,7 +101,7 @@ private:
 		// find a queue family that supports both graphics and presentation
 		std::vector<vk::QueueFamilyProperties> queueFamilies = physicalDevice.getQueueFamilyProperties();
 
-#ifdef _DEBUG_ // disabled debug output for now
+#ifndef _NDEBUG // disabled debug output for now
 		// query all queue families
 		for (int i = 0; i < queueFamilies.size(); i++) {
 			std::ostringstream oss;
@@ -148,7 +125,17 @@ private:
 			if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics &&
 				physicalDevice.getSurfaceSupportKHR(i, surface)) {
 
-				iQueue = i;
+				iGraphicsQueue = i;
+				break;
+			}
+		}
+		// get optimal compute queue
+		for (int i = 0; i < queueFamilies.size(); i++) {
+
+			if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute && 
+				!(queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
+
+				iComputeQueue = i;
 				break;
 			}
 		}
@@ -163,6 +150,10 @@ private:
 				break;
 			}
 		}
+
+		// if no dedicated queues are not found, use graphics queue
+		if (iComputeQueue == UINT32_MAX) iComputeQueue = iGraphicsQueue;
+		if (iTransferQueue == UINT32_MAX) iTransferQueue = iGraphicsQueue;
 	}
 	void query_swapchain_support_details(vk::SurfaceKHR& surface) {
 		capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
@@ -174,8 +165,8 @@ public:
 	vk::PhysicalDevice physicalDevice;
 	vk::Device logicalDevice;
 
-	vk::Queue queue, transferQueue;
-	uint32_t iQueue, iTransferQueue;
+	vk::Queue graphicsQueue, computeQueue, transferQueue;
+	uint32_t iGraphicsQueue, iComputeQueue, iTransferQueue;
 
 	// some properties of the device
 	vk::SurfaceCapabilitiesKHR capabilities;

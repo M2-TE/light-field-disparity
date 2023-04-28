@@ -38,8 +38,7 @@ private:
 		vk::CommandPoolCreateInfo commandPoolInfo;
 
 		commandPoolInfo = vk::CommandPoolCreateInfo()
-			.setQueueFamilyIndex(device.iQueue);
-
+			.setQueueFamilyIndex(device.iGraphicsQueue);
 		commandPool = device.logicalDevice.createCommandPool(commandPoolInfo);
 
 	}

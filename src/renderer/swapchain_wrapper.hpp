@@ -88,7 +88,7 @@ public:
 			// command buffers
 			.setCommandBufferCount(1).setPCommandBuffers(&syncFrame.commandBuffer);
 
-		device.queue.submit(submitInfo, syncFrame.commandBufferFence);
+		device.graphicsQueue.submit(submitInfo, syncFrame.commandBufferFence);
 
 		// Present
 		vk::PresentInfoKHR presentInfo = vk::PresentInfoKHR()
@@ -98,7 +98,7 @@ public:
 			// swapchains
 			.setSwapchainCount(1).setPSwapchains(&swapchain);
 
-		vk::Result result = device.queue.presentKHR(&presentInfo);
+		vk::Result result = device.graphicsQueue.presentKHR(&presentInfo);
 		switch (result) {
 			case vk::Result::eSuccess: break;
 			case vk::Result::eErrorOutOfDateKHR: VMI_ERR("Swapchain (Present): KHR out of date."); break;

@@ -62,11 +62,11 @@ private:
 	}
 	void create_command_pools(DeviceWrapper& device) {
 		vk::CommandPoolCreateInfo commandPoolInfo = vk::CommandPoolCreateInfo()
-			.setQueueFamilyIndex(device.iQueue)
+			.setQueueFamilyIndex(device.iGraphicsQueue)
 			.setFlags(vk::CommandPoolCreateFlagBits::eTransient);
 		transientCommandPool = device.logicalDevice.createCommandPool(commandPoolInfo);
 
-		commandPoolInfo.setQueueFamilyIndex(device.iQueue);
+		commandPoolInfo.setQueueFamilyIndex(device.iGraphicsQueue);
 		transferCommandPool = device.logicalDevice.createCommandPool(commandPoolInfo);
 	}
 	void create_descriptor_pools(DeviceWrapper& device) {
@@ -88,7 +88,7 @@ private:
 	void create_render_pipelines(DeviceWrapper& device) {
 		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eTransferDst 
 			| vk::ImageUsageFlagBits::eInputAttachment
-			| vk::ImageUsageFlagBits::eStorage;
+			| vk::ImageUsageFlagBits::eSampled;
 		disparityImage.init(device, swapchain, allocator, usage);
 		swapchainWrite.init(device, swapchain, descPool, disparityImage);
 	}
