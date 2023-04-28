@@ -51,7 +51,6 @@ private:
 
 		return true;
 	}
-
 	bool poll_inputs() {
 		input.flush();
 		SDL_Event sdlEvent;

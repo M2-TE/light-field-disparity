@@ -5,10 +5,12 @@ add_custom_target(shaders)
 file(GLOB_RECURSE HLSL_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*.hlsl) # this one is a bit unnecessary
 file(GLOB_RECURSE HLSL_VS_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*_vs.hlsl)
 file(GLOB_RECURSE HLSL_PS_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*_ps.hlsl)
+file(GLOB_RECURSE HLSL_CS_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*_cs.hlsl)
 
 # set properties on the shaders according to their names
-set_source_files_properties(${HLSL_VS_FILES} PROPERTIES ShaderType "vs") # mark vs as pixel shaders
+set_source_files_properties(${HLSL_VS_FILES} PROPERTIES ShaderType "vs") # mark vs as vertex shaders
 set_source_files_properties(${HLSL_PS_FILES} PROPERTIES ShaderType "ps") # mark ps as pixel shaders
+set_source_files_properties(${HLSL_CS_FILES} PROPERTIES ShaderType "cs") # mark ps as compute shaders
 set_source_files_properties(${HLSL_FILES} PROPERTIES ShaderModel "6_0") # the shader model to be used
 
 # create and initialize main shader header
