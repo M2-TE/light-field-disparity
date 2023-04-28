@@ -177,8 +177,7 @@ private:
 
 	void create_pipeline_layout(DeviceWrapper& device) {
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
-			.setSetLayouts(descSetLayout)
-			.setPushConstantRangeCount(0).setPushConstantRanges(nullptr);
+			.setSetLayouts(descSetLayout);
 		pipelineLayout = device.logicalDevice.createPipelineLayout(pipelineLayoutInfo);
 	}
 	void create_pipeline(DeviceWrapper& device, SwapchainWrapper& swapchain) {
@@ -188,15 +187,12 @@ private:
 			shaderStages[0] = vk::PipelineShaderStageCreateInfo()
 				.setStage(vk::ShaderStageFlagBits::eVertex)
 				.setModule(vs)
-				// entrypoint (one shader module with multiple entry points for different shading stages?)
-				.setPName("main")
-				.setPSpecializationInfo(nullptr); // constants for optimization
+				.setPName("main");
 
 			shaderStages[1] = vk::PipelineShaderStageCreateInfo()
 				.setStage(vk::ShaderStageFlagBits::eFragment)
 				.setModule(ps)
-				.setPName("main")
-				.setPSpecializationInfo(nullptr);
+				.setPName("main");
 		}
 
 		// Input

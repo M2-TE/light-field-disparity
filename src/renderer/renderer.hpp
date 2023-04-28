@@ -3,7 +3,8 @@
 #include "vk_mem_alloc.hpp"
 #include "swapchain_wrapper.hpp"
 #include "image_wrapper.hpp"
-#include "render_passes/swapchain_write.hpp"
+#include "pipelines/swapchain_write.hpp"
+#include "pipelines/disparity_compute.hpp"
 #include "imgui_wrapper.hpp"
 
 
