@@ -1,3 +1,5 @@
+#pragma once
+
 class ImageWrapper 
 {
 public:
@@ -5,8 +7,8 @@ public:
     ~ImageWrapper() = default;
 
 public:
-    void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vma::Allocator allocator) {
-        create_image(swapchain, allocator);
+    void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vma::Allocator allocator, vk::ImageUsageFlags usage) {
+        create_image(swapchain, allocator, usage);
         create_image_view(device);
     }
     void destroy(DeviceWrapper& device, vma::Allocator allocator) {
@@ -19,7 +21,7 @@ public:
     vk::ImageView get_image_view() { return imageView; }
 
 private:
-    void create_image(SwapchainWrapper& swapchain, vma::Allocator allocator) {
+    void create_image(SwapchainWrapper& swapchain, vma::Allocator allocator, vk::ImageUsageFlags usage) {
         vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
 			.setImageType(vk::ImageType::e2D)
 			.setExtent(vk::Extent3D(swapchain.get_extent(), 1))
@@ -28,8 +30,7 @@ private:
             .setArrayLayers(1)
 			.setSamples(vk::SampleCountFlagBits::e1)
 			.setTiling(vk::ImageTiling::eOptimal)
-			.setUsage(vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled
-                | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eInputAttachment)
+			.setUsage(usage)
 			.setFormat(colorFormat);
 
 		vma::AllocationCreateInfo allocCreateInfo = vma::AllocationCreateInfo()
@@ -57,6 +58,7 @@ private:
 
 public:
     const vk::Format colorFormat;
+    const vk::ImageUsageFlags usage;
 
 private:
     vk::Image image;

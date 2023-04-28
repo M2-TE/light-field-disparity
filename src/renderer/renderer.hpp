@@ -1,9 +1,10 @@
+#pragma once
+
 #include "vk_mem_alloc.hpp"
 #include "swapchain_wrapper.hpp"
 #include "image_wrapper.hpp"
 #include "render_passes/swapchain_write.hpp"
 #include "imgui_wrapper.hpp"
-// #include "uniform_buffer.hpp"
 
 
 class Renderer 
@@ -85,7 +86,10 @@ private:
 	}
 
 	void create_render_pipelines(DeviceWrapper& device) {
-		disparityImage.init(device, swapchain, allocator);
+		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eTransferDst 
+			| vk::ImageUsageFlagBits::eInputAttachment
+			| vk::ImageUsageFlagBits::eStorage;
+		disparityImage.init(device, swapchain, allocator, usage);
 		swapchainWrite.init(device, swapchain, descPool, disparityImage);
 	}
 	void destroy_render_pipelines(DeviceWrapper& device) {

@@ -2,7 +2,7 @@
 add_custom_target(shaders)
 
 # gather all HLSL shader files
-file(GLOB_RECURSE HLSL_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*.hlsl) # this one is a bit unnecessary
+file(GLOB_RECURSE HLSL_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*.hlsl) # purely for convenience
 file(GLOB_RECURSE HLSL_VS_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*_vs.hlsl)
 file(GLOB_RECURSE HLSL_PS_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*_ps.hlsl)
 file(GLOB_RECURSE HLSL_CS_FILES ${PROJECT_SOURCE_DIR}/src/shaders/*_cs.hlsl)
@@ -15,7 +15,7 @@ set_source_files_properties(${HLSL_FILES} PROPERTIES ShaderModel "6_0") # the sh
 
 # create and initialize main shader header
 add_custom_command(TARGET shaders
-    COMMAND cp shader_wrapper.hpp shaders.hpp
+    COMMAND cp shaders_template.hpp shaders.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     VERBATIM)
 
