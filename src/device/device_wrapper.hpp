@@ -75,7 +75,6 @@ public:
 		} else {
 			queueInfos.emplace_back(vk::DeviceQueueCreateFlags(0), iTransferQueue, 1, &priority);
 		}
-		
 
 		vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo()
 			.setEnabledExtensionCount((uint32_t)requiredDeviceExtensions.size()).setPpEnabledExtensionNames(requiredDeviceExtensions.data())
@@ -86,10 +85,9 @@ public:
 		logicalDevice = physicalDevice.createDevice(createInfo);
 
 		// get actual handles for queues
-		uint index = 0;
-		graphicsQueue = logicalDevice.getQueue(iGraphicsQueue, index++);
-		computeQueue = iComputeQueue == iGraphicsQueue ? graphicsQueue : logicalDevice.getQueue(iComputeQueue, index++);
-		transferQueue = iTransferQueue == iGraphicsQueue ? graphicsQueue : logicalDevice.getQueue(iTransferQueue, index);
+		graphicsQueue = logicalDevice.getQueue(iGraphicsQueue, 0);
+		computeQueue = iComputeQueue == iGraphicsQueue ? graphicsQueue : logicalDevice.getQueue(iComputeQueue, 0);
+		transferQueue = iTransferQueue == iGraphicsQueue ? graphicsQueue : logicalDevice.getQueue(iTransferQueue, 0);
 
 		VMI_LOG("[Initializing] Device-specific vulkan functions...");
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(logicalDevice);
@@ -101,7 +99,7 @@ private:
 		// find a queue family that supports both graphics and presentation
 		std::vector<vk::QueueFamilyProperties> queueFamilies = physicalDevice.getQueueFamilyProperties();
 
-#ifndef _NDEBUG // disabled debug output for now
+#ifdef NDEBUG_DISABLED // disabled debug output for now
 		// query all queue families
 		for (int i = 0; i < queueFamilies.size(); i++) {
 			std::ostringstream oss;
