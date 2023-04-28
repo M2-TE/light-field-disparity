@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(lightfields VERSION 0.1.0)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(Vulkan REQUIRED)
 find_package(SDL2 REQUIRED)
 
-# compile imgui as static object library
+# compile imgui as shared object library
 add_library(imgui STATIC
     ext/imgui/imgui.cpp
     ext/imgui/imgui_draw.cpp
@@ -13,27 +14,19 @@ add_library(imgui STATIC
     ext/imgui/imgui_widgets.cpp
     ext/imgui/backends/imgui_impl_sdl2.cpp
     ext/imgui/backends/imgui_impl_vulkan.cpp)
-target_include_directories(imgui 
+target_include_directories(imgui
     PUBLIC ext/imgui
     PUBLIC ${SDL2_INCLUDE_DIRS})
 install(TARGETS imgui DESTINATION lib)
 
-# compile VulkanMemoryAllocator with hpp headers
-add_subdirectory(ext/vma)
-set_target_properties(VulkanMemoryAllocator PROPERTIES
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-)
-
+# compile shaders into spir-v bytecode headers
 add_subdirectory(src/shaders)
 
 # compile lightfields as executable
 add_executable(${PROJECT_NAME})
 add_dependencies(${PROJECT_NAME} 
     shaders 
-    imgui 
-    VulkanMemoryAllocator)
+    imgui)
 target_precompile_headers(${PROJECT_NAME} 
     PRIVATE src/pch/pch.hpp)
 target_sources(${PROJECT_NAME} 
@@ -41,13 +34,12 @@ target_sources(${PROJECT_NAME}
     PRIVATE src/main.cpp)
 target_include_directories(${PROJECT_NAME}
     PRIVATE src
-    PUBLIC ext/imgui
-    PUBLIC ext/vma/include
-    PUBLIC ext/vma/VulkanMemoryAllocator/include
-    PUBLIC ${SDL2_INCLUDE_DIRS})
+    PRIVATE ext/imgui
+    PRIVATE ext/vma/include
+    PRIVATE ext/vma/VulkanMemoryAllocator/include
+    PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} 
     ${Vulkan_LIBRARIES}
     ${SDL2_LIBRARIES}
-    imgui
-    VulkanMemoryAllocator)
+    imgui)
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

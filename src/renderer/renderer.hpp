@@ -1,3 +1,4 @@
+#include "vk_mem_alloc.hpp"
 #include "swapchain_wrapper.hpp"
 #include "image_wrapper.hpp"
 #include "render_passes/swapchain_write.hpp"
@@ -44,11 +45,16 @@ public:
 
 private:
 	void create_vma_allocator(DeviceWrapper& device, Window& window) {
+		vk::DynamicLoader dl;
+		vma::VulkanFunctions vulkanFunctions = vma::VulkanFunctions()
+			.setVkGetDeviceProcAddr(dl.getProcAddress<PFN_vkGetDeviceProcAddr>("vkGetDeviceProcAddr"))
+			.setVkGetInstanceProcAddr(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 		vma::AllocatorCreateInfo info = vma::AllocatorCreateInfo()
 			.setPhysicalDevice(device.physicalDevice)
+			.setPVulkanFunctions(&vulkanFunctions)
 			.setDevice(device.logicalDevice)
 			.setInstance(window.get_vulkan_instance())
-			.setVulkanApiVersion(VK_API_VERSION_1_1)
+			.setVulkanApiVersion(VK_API_VERSION)
 			.setFlags(vma::AllocatorCreateFlagBits::eKhrDedicatedAllocation);
 
 		allocator = vma::createAllocator(info);
