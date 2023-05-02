@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(lightfields VERSION 0.1.0)
+project(light_field_depth_estimator VERSION 0.1.0)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -22,7 +22,7 @@ install(TARGETS imgui DESTINATION lib)
 # compile shaders into spir-v bytecode headers
 add_subdirectory(src/shaders)
 
-# compile lightfields as executable
+# compile as executable
 add_executable(${PROJECT_NAME})
 add_dependencies(${PROJECT_NAME} 
     shaders
