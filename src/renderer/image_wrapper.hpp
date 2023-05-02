@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stb/stb_image.h"
+
 class ImageWrapper 
 {
 public:
@@ -51,6 +53,12 @@ public:
 		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
     }
 
+    void load_pfm(const char* filename) {
+		int width, height, channels;
+		stbi_uc* img = stbi_load(filename, &width, &height, &channels, STBI_rgb_alpha);
+		// vk::DeviceSize fileSize = width * height * STBI_rgb_alpha;
+		vk::DeviceSize fileSize = width * height * channels; // same as above?
+    }
 public:
     vk::Image get_image() { return image; }
     vk::ImageView get_image_view() { return imageView; }

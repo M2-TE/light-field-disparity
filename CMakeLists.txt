@@ -25,7 +25,7 @@ add_subdirectory(src/shaders)
 # compile lightfields as executable
 add_executable(${PROJECT_NAME})
 add_dependencies(${PROJECT_NAME} 
-    shaders 
+    shaders
     imgui)
 target_precompile_headers(${PROJECT_NAME} 
     PRIVATE src/pch/pch.hpp)
@@ -34,6 +34,7 @@ target_sources(${PROJECT_NAME}
     PRIVATE src/main.cpp)
 target_include_directories(${PROJECT_NAME}
     PRIVATE src
+    PRIVATE ext
     PRIVATE ext/imgui
     PRIVATE ext/vma/include
     PRIVATE ext/vma/VulkanMemoryAllocator/include

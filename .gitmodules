@@ -4,3 +4,6 @@
 [submodule "ext/vma"]
 	path = ext/vma
 	url = https://github.com/M2-TE/VulkanMemoryAllocator-Hpp.git
+[submodule "ext/stb"]
+	path = ext/stb
+	url = https://github.com/nothings/stb.git
