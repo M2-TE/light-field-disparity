@@ -50,21 +50,6 @@ public:
 				.setBaseMipLevel(0).setLevelCount(1));
 		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
     }
-   
-   // TODO:
-    void generate_binding(DeviceWrapper& device, uint32_t iBindingSlot, vk::DescriptorType descType, vk::ShaderStageFlags shaderStageFlags) {
-		vk::DescriptorSetLayoutBinding setLayoutBinding = vk::DescriptorSetLayoutBinding()
-			.setBinding(iBindingSlot)
-			.setDescriptorCount(1)
-			.setDescriptorType(descType)
-			.setStageFlags(shaderStageFlags);
-
-		// create descriptor set layout from the bindings
-		vk::DescriptorSetLayoutCreateInfo createInfo = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings(setLayoutBinding);
-
-		// return device.logicalDevice.createDescriptorSetLayout(createInfo);
-    }
 
 public:
     vk::Image get_image() { return image; }

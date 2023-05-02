@@ -61,42 +61,40 @@ private:
 		vk::DescriptorSetLayoutCreateInfo createInfo = vk::DescriptorSetLayoutCreateInfo()
 			.setBindings(bindings);
 		descSetLayout = device.logicalDevice.createDescriptorSetLayout(createInfo);
-        // set bindings
 
-        {
-            // allocate the descriptor sets using descriptor pool
-            vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
-                .setDescriptorPool(descPool)
-                .setDescriptorSetCount(1).setPSetLayouts(&descSetLayout);
-            descSet = device.logicalDevice.allocateDescriptorSets(allocInfo)[0];
+        // allocate the descriptor sets using descriptor pool
+        vk::DescriptorSetAllocateInfo allocInfo = vk::DescriptorSetAllocateInfo()
+            .setDescriptorPool(descPool)
+            .setDescriptorSetCount(1).setPSetLayouts(&descSetLayout);
+        descSet = device.logicalDevice.allocateDescriptorSets(allocInfo)[0];
 
-            // input image
-            vk::DescriptorImageInfo descriptor = vk::DescriptorImageInfo()
-                .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                .setImageView(inputImage.get_image_view())
-                .setSampler(nullptr);
-            vk::WriteDescriptorSet descBufferWrites = vk::WriteDescriptorSet()
-                .setDstSet(descSet)
-                .setDstBinding(0)
-                .setDstArrayElement(0)
-                .setDescriptorType(vk::DescriptorType::eSampledImage)
-                .setImageInfo(descriptor);
-            device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
+        // input image
+        vk::DescriptorImageInfo descriptor = vk::DescriptorImageInfo()
+            .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
+            .setImageView(inputImage.get_image_view())
+            .setSampler(nullptr);
+        vk::WriteDescriptorSet descBufferWrites = vk::WriteDescriptorSet()
+            .setDstSet(descSet)
+            .setDstBinding(0)
+            .setDstArrayElement(0)
+            .setDescriptorType(vk::DescriptorType::eSampledImage)
+            .setImageInfo(descriptor);
+        device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
 
-            // output image
-            descriptor = vk::DescriptorImageInfo()
-                .setImageLayout(vk::ImageLayout::eGeneral)
-                .setImageView(outputImage.get_image_view())
-                .setSampler(nullptr);
-            descBufferWrites = vk::WriteDescriptorSet()
-                .setDstSet(descSet)
-                .setDstBinding(1)
-                .setDstArrayElement(0)
-                .setDescriptorType(vk::DescriptorType::eStorageImage)
-                .setImageInfo(descriptor);
-            device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
-        }
+        // output image
+        descriptor = vk::DescriptorImageInfo()
+            .setImageLayout(vk::ImageLayout::eGeneral)
+            .setImageView(outputImage.get_image_view())
+            .setSampler(nullptr);
+        descBufferWrites = vk::WriteDescriptorSet()
+            .setDstSet(descSet)
+            .setDstBinding(1)
+            .setDstArrayElement(0)
+            .setDescriptorType(vk::DescriptorType::eStorageImage)
+            .setImageInfo(descriptor);
+        device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
 
+        // create pipeline layout
         vk::PipelineLayoutCreateInfo layoutInfo = vk::PipelineLayoutCreateInfo()
             .setSetLayouts(descSetLayout);
         pipelineLayout = device.logicalDevice.createPipelineLayout(layoutInfo);

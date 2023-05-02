@@ -1,3 +1,4 @@
+// [[vk::push_constant]] PCS pcs;
 Texture3D<float4> lightField : register(t0);
 RWTexture2D<float> disparityTex : register(u1);
 

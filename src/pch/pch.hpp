@@ -11,7 +11,8 @@
 
 // load vulkan functions dynamically
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#define VK_API_VERSION VK_API_VERSION_1_1 // use vulkan 1.1
+#define VK_API_VERSION VK_API_VERSION_1_3 // use vulkan 1.3
+// -> vulkan 1.1 is sufficient, but a spir-v bug throws some validation warnings (which are annoying)
 #include <vulkan/vulkan.hpp>
 
 // Vulkan Memory Allocator with hpp bindings

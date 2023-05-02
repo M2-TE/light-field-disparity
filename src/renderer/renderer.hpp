@@ -95,7 +95,7 @@ private:
 		lightFieldImage.init(device, allocator, vk::Extent3D(swapchain.get_extent(), 9), usage);
 		lightFieldImage.transition_layout(device, transferCommandPool, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-		usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled;
+		usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;
 		disparityImage.init(device, allocator, vk::Extent3D(swapchain.get_extent(), 1), usage);
 		disparityImage.transition_layout(device, transferCommandPool, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 
