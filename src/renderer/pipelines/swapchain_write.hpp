@@ -67,17 +67,7 @@ private:
 		ps = create_shader_module(device, swapchain_write_ps, sizeof(swapchain_write_ps));
 	}
 	void create_render_pass(DeviceWrapper& device, SwapchainWrapper& swapchain, ImageWrapper& inputImage) {
-		VMI_LOG("TODO: define image layout of swapchain write input");
-		std::array<vk::AttachmentDescription, 2> attachments = {
-			vk::AttachmentDescription()
-				.setFormat(inputImage.colorFormat)
-				.setSamples(vk::SampleCountFlagBits::e1)
-				.setLoadOp(vk::AttachmentLoadOp::eLoad)
-				.setStoreOp(vk::AttachmentStoreOp::eDontCare)
-				.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare)
-				.setStencilStoreOp(vk::AttachmentStoreOp::eDontCare)
-				.setInitialLayout(vk::ImageLayout::eUndefined)
-				.setFinalLayout(vk::ImageLayout::eShaderReadOnlyOptimal),
+		std::array<vk::AttachmentDescription, 1> attachments = {
 			// Output
 			vk::AttachmentDescription()
 				.setFormat(swapchain.get_surface_format().format)
@@ -91,12 +81,10 @@ private:
 		};
 
 		// Subpass Descriptions
-		vk::AttachmentReference input = vk::AttachmentReference(0, vk::ImageLayout::eShaderReadOnlyOptimal);
-		vk::AttachmentReference output = vk::AttachmentReference(1, vk::ImageLayout::eColorAttachmentOptimal);
+		vk::AttachmentReference output = vk::AttachmentReference(0, vk::ImageLayout::eColorAttachmentOptimal);
 		vk::SubpassDescription subpass = vk::SubpassDescription()
 			.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics)
 			.setPDepthStencilAttachment(nullptr)
-			.setInputAttachments(input)
 			.setColorAttachments(output);
 
 		// Subpass dependency
@@ -119,17 +107,15 @@ private:
 		renderPass = device.logicalDevice.createRenderPass(renderPassInfo);
 	}
 	void create_framebuffer(DeviceWrapper& device, SwapchainWrapper& swapchain, ImageWrapper& inputImage) {
-		std::array<vk::ImageView, 2> imageViews = { inputImage.get_image_view(), VK_NULL_HANDLE };
 		// create one framebuffer for each potential image view output
         uint32_t nSwapchainImages = swapchain.get_image_count();
 		framebuffers.resize(nSwapchainImages);
 		for (size_t i = 0; i < nSwapchainImages; i++) {
-			imageViews[1] = swapchain.get_image_view(i);
 			vk::FramebufferCreateInfo framebufferInfo = vk::FramebufferCreateInfo()
 				.setRenderPass(renderPass)
 				.setWidth(swapchain.get_extent().width)
 				.setHeight(swapchain.get_extent().height)
-				.setAttachments(imageViews)
+				.setAttachments(swapchain.get_image_view(i))
 				.setLayers(1);
 
 			framebuffers[i] = device.logicalDevice.createFramebuffer(framebufferInfo);
@@ -140,7 +126,7 @@ private:
 		vk::DescriptorSetLayoutBinding setLayoutBinding = vk::DescriptorSetLayoutBinding()
 			.setBinding(0)
 			.setDescriptorCount(1)
-			.setDescriptorType(vk::DescriptorType::eInputAttachment)
+			.setDescriptorType(vk::DescriptorType::eSampledImage)
 			.setStageFlags(vk::ShaderStageFlagBits::eFragment);
 
 		// create descriptor set layout from the bindings
@@ -166,11 +152,8 @@ private:
 			.setDstSet(descSet)
 			.setDstBinding(0)
 			.setDstArrayElement(0)
-			.setDescriptorType(vk::DescriptorType::eInputAttachment)
-			//
-			.setPBufferInfo(nullptr)
-			.setImageInfo(descriptor)
-			.setPTexelBufferView(nullptr);
+			.setDescriptorType(vk::DescriptorType::eSampledImage)
+			.setImageInfo(descriptor);
 
 		device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
 	}
@@ -342,7 +325,7 @@ private:
 
 	// descriptor
 	vk::DescriptorSetLayout descSetLayout;
-	vk::DescriptorSet descSet;
+	vk::DescriptorSet descSet; // doesnt really need to be stored
 
 	// misc
 	vk::Rect2D fullscreenRect;

@@ -18,12 +18,12 @@ public:
 		create_descriptor_pools(device);
 
 		swapchain.init(device, window);
-		create_render_pipelines(device);
+		create_pipelines(device);
 		imgui.init(device, swapchain, window, swapchainWrite);
 	}
 	void destroy(DeviceWrapper& device)
 	{
-		destroy_render_pipelines(device);
+		destroy_pipelines(device);
 		swapchain.destroy(device);
 
 		device.logicalDevice.destroyCommandPool(transientCommandPool);
@@ -39,7 +39,9 @@ public:
 		uint32_t iSwapchainImage = swapchain.acquire_next_image(device.logicalDevice);
 		vk::CommandBuffer commandBuffer = swapchain.record_commands(device, iSwapchainImage);
 
-		// direct write to swapchain image
+		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
+		disparityCompute.execute(commandBuffer);
+		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 		swapchainWrite.execute(commandBuffer, iSwapchainImage);
 
 		swapchain.present(device, iSwapchainImage);
@@ -67,7 +69,7 @@ private:
 			.setFlags(vk::CommandPoolCreateFlagBits::eTransient);
 		transientCommandPool = device.logicalDevice.createCommandPool(commandPoolInfo);
 
-		commandPoolInfo.setQueueFamilyIndex(device.iGraphicsQueue);
+		commandPoolInfo.setQueueFamilyIndex(device.iTransferQueue);
 		transferCommandPool = device.logicalDevice.createCommandPool(commandPoolInfo);
 	}
 	void create_descriptor_pools(DeviceWrapper& device) {
@@ -86,25 +88,38 @@ private:
 		descPool = device.logicalDevice.createDescriptorPool(info);
 	}
 
-	void create_render_pipelines(DeviceWrapper& device) {
-		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eTransferDst 
-			| vk::ImageUsageFlagBits::eInputAttachment
-			| vk::ImageUsageFlagBits::eSampled;
-		disparityImage.init(device, swapchain, allocator, usage);
+	void create_pipelines(DeviceWrapper& device) {
+		vk::ImageUsageFlags usage;
+
+		usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+		lightFieldImage.init(device, allocator, vk::Extent3D(swapchain.get_extent(), 9), usage);
+		lightFieldImage.transition_layout(device, transferCommandPool, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+		usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled;
+		disparityImage.init(device, allocator, vk::Extent3D(swapchain.get_extent(), 1), usage);
+		disparityImage.transition_layout(device, transferCommandPool, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+		disparityCompute.init(device, descPool, lightFieldImage, disparityImage);
 		swapchainWrite.init(device, swapchain, descPool, disparityImage);
 	}
-	void destroy_render_pipelines(DeviceWrapper& device) {
-		swapchainWrite.destroy(device);
+	void destroy_pipelines(DeviceWrapper& device) {
+		lightFieldImage.destroy(device, allocator);
 		disparityImage.destroy(device, allocator);
+		
+		disparityCompute.destroy(device);
+		swapchainWrite.destroy(device);
 	}
 
 private:
 	vma::Allocator allocator;
 	SwapchainWrapper swapchain;
 
+	DisparityCompute disparityCompute;
 	SwapchainWrite swapchainWrite;
-	ImageWrapper disparityImage = { vk::Format::eR32Sfloat };
 	ImguiWrapper imgui;
+
+	ImageWrapper lightFieldImage = { vk::Format::eR8G8B8A8Unorm };
+	ImageWrapper disparityImage = { vk::Format::eR32Sfloat };
 
 	vk::CommandPool transientCommandPool;
 	vk::CommandPool transferCommandPool;

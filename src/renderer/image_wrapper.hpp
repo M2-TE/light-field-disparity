@@ -7,13 +7,63 @@ public:
     ~ImageWrapper() = default;
 
 public:
-    void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vma::Allocator allocator, vk::ImageUsageFlags usage) {
-        create_image(swapchain, allocator, usage);
+    void init(DeviceWrapper& device, vma::Allocator allocator, vk::Extent3D extent, vk::ImageUsageFlags usage) {
+        this->extent = extent;
+        create_image(allocator, usage);
         create_image_view(device);
     }
     void destroy(DeviceWrapper& device, vma::Allocator allocator) {
         allocator.destroyImage(image, alloc);
         device.logicalDevice.destroyImageView(imageView);
+    }
+    
+    void transition_layout(DeviceWrapper& device, vk::CommandPool commandPool, vk::ImageLayout from, vk::ImageLayout to) {
+        vk::CommandBufferAllocateInfo allocInfo = vk::CommandBufferAllocateInfo()
+            .setLevel(vk::CommandBufferLevel::ePrimary)
+            .setCommandPool(commandPool)
+            .setCommandBufferCount(1);
+
+        vk::CommandBuffer commandBuffer;
+        vk::Result res = device.logicalDevice.allocateCommandBuffers(&allocInfo, &commandBuffer);
+        if (res != vk::Result::eSuccess) VMI_ERR("Failed to allocate command buffer");
+
+        vk::CommandBufferBeginInfo beginInfo = vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+		commandBuffer.begin(beginInfo);
+        transition_layout(commandBuffer, from, to);
+        commandBuffer.end();
+
+        vk::SubmitInfo submitInfo = vk::SubmitInfo().setCommandBuffers(commandBuffer);
+        device.transferQueue.submit(submitInfo);
+        device.transferQueue.waitIdle(); // TODO: change this to wait on a fence instead (upon queue submit) so multiple memory transfers would be possible
+
+        // free command buffer directly after use
+        device.logicalDevice.freeCommandBuffers(commandPool, commandBuffer);
+    }
+    void transition_layout(vk::CommandBuffer commandBuffer, vk::ImageLayout from, vk::ImageLayout to) {
+        vk::ImageMemoryBarrier barrier = vk::ImageMemoryBarrier()
+			.setOldLayout(from)
+			.setNewLayout(to)
+			.setImage(image)
+			.setSubresourceRange(vk::ImageSubresourceRange()
+				.setAspectMask(vk::ImageAspectFlagBits::eColor)
+				.setBaseArrayLayer(0).setLayerCount(1)
+				.setBaseMipLevel(0).setLevelCount(1));
+		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
+    }
+   
+   // TODO:
+    void generate_binding(DeviceWrapper& device, uint32_t iBindingSlot, vk::DescriptorType descType, vk::ShaderStageFlags shaderStageFlags) {
+		vk::DescriptorSetLayoutBinding setLayoutBinding = vk::DescriptorSetLayoutBinding()
+			.setBinding(iBindingSlot)
+			.setDescriptorCount(1)
+			.setDescriptorType(descType)
+			.setStageFlags(shaderStageFlags);
+
+		// create descriptor set layout from the bindings
+		vk::DescriptorSetLayoutCreateInfo createInfo = vk::DescriptorSetLayoutCreateInfo()
+			.setBindings(setLayoutBinding);
+
+		// return device.logicalDevice.createDescriptorSetLayout(createInfo);
     }
 
 public:
@@ -21,10 +71,10 @@ public:
     vk::ImageView get_image_view() { return imageView; }
 
 private:
-    void create_image(SwapchainWrapper& swapchain, vma::Allocator allocator, vk::ImageUsageFlags usage) {
+    void create_image(vma::Allocator allocator, vk::ImageUsageFlags usage) {
         vk::ImageCreateInfo imageCreateInfo = vk::ImageCreateInfo()
-			.setImageType(vk::ImageType::e2D)
-			.setExtent(vk::Extent3D(swapchain.get_extent(), 1))
+			.setImageType(extent.depth > 1 ? vk::ImageType::e3D : vk::ImageType::e2D)
+			.setExtent(extent)
 			//
 			.setMipLevels(1)
             .setArrayLayers(1)
@@ -47,20 +97,20 @@ private:
 			.setBaseArrayLayer(0).setLayerCount(1);
 
 		vk::ImageViewCreateInfo imageViewInfo = vk::ImageViewCreateInfo()
-			.setViewType(vk::ImageViewType::e2D)
+			.setViewType(extent.depth > 1 ? vk::ImageViewType::e3D : vk::ImageViewType::e2D)
 			.setSubresourceRange(subresourceRange)
 			.setFormat(colorFormat)
 			.setImage(image);
-
+            
 		// colors view
 		imageView = device.logicalDevice.createImageView(imageViewInfo);
     }
 
 public:
     const vk::Format colorFormat;
-    const vk::ImageUsageFlags usage;
 
 private:
+    vk::Extent3D extent;
     vk::Image image;
     vk::ImageView imageView;
     vma::Allocation alloc;
