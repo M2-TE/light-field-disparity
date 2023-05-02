@@ -1,5 +1,7 @@
 #pragma once
 
+#include "shaders/shaders.hpp"
+
 class DisparityCompute 
 {
 public:
