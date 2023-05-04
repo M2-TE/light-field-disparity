@@ -12,5 +12,5 @@ float4 main(float4 inputPos : SV_Position) : SV_Target
     uint2 texPos = uint2(inputPos.x, inputPos.y);
     float disparity = disparityTex[texPos];
     // return get_heat(disparity);
-    return disparity;
+    return disparity.rrrr;
 }

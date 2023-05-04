@@ -15,7 +15,8 @@ set_source_files_properties(${HLSL_FILES} PROPERTIES ShaderModel "6_0") # the sh
 
 # create and initialize main shader header
 add_custom_command(TARGET shaders
-    COMMAND cp shaders_template.hpp shaders.hpp
+    COMMAND echo "#pragma once" > shaders.hpp
+    COMMAND echo "#include \"shader_utils.hpp\"" >> shaders.hpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     VERBATIM)
 
@@ -26,7 +27,7 @@ foreach(FILE ${HLSL_FILES})
     get_source_file_property(shadermodel ${FILE} ShaderModel)
     add_custom_command(TARGET shaders
         # compile hlsl to spir-v
-        COMMAND dxc -spirv -T ${shadertype}_${shadermodel} -E main ${FILE_WE}.hlsl -Fh ${CMAKE_BINARY_DIR}/${FILE_WE}.hpp -Vn ${FILE_WE}
+        COMMAND dxc -spirv -T ${shadertype}_${shadermodel} -E main ${PROJECT_SOURCE_DIR}/src/shaders/${FILE_WE}.hlsl -Fh ${CMAKE_BINARY_DIR}/${FILE_WE}.hpp -Vn ${FILE_WE}
         # include in main shader header
         COMMAND echo "#include <${CMAKE_BINARY_DIR}/${FILE_WE}.hpp>" >> shaders.hpp
         MAIN_DEPENDENCY ${CMAKE_BINARY_DIR}/${FILE_WE}

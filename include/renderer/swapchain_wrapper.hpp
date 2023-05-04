@@ -1,5 +1,6 @@
 #pragma once
 
+#include "window/window.hpp"
 #include "sync_frame.hpp"
 
 class SwapchainWrapper
@@ -26,7 +27,6 @@ public:
 			syncFrames[i].destroy(device);
 		}
 	}
-
 
 	inline SyncFrame& get_sync_frame() { return syncFrames[curSyncFrame]; }
 	inline vk::ImageView& get_image_view(uint32_t i) { return imageViews[i]; }

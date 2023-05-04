@@ -1,45 +1,15 @@
 #pragma once
 
-#include "shaders/shaders.hpp"
+#include "renderer/swapchain_wrapper.hpp"
+#include "renderer/image_wrapper.hpp"
+#include "device/device_wrapper.hpp"
 
 class SwapchainWrite
 {
 public:
-	SwapchainWrite() = default;
-	~SwapchainWrite() = default;
+	void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vk::DescriptorPool descPool, ImageWrapper& inputImage);
+	void destroy(DeviceWrapper& device);
 
-public:
-	void init(DeviceWrapper& device, SwapchainWrapper& swapchain, vk::DescriptorPool descPool, ImageWrapper& inputImage) {
-		create_shader_modules(device);
-		create_render_pass(device, swapchain, inputImage);
-		create_framebuffer(device, swapchain, inputImage);
-
-		create_desc_set_layout(device);
-		create_desc_set(device, descPool, inputImage);
-
-		create_pipeline_layout(device);
-		create_pipeline(device, swapchain);
-
-		fullscreenRect = vk::Rect2D({ 0, 0 }, swapchain.get_extent());
-	}
-	void destroy(DeviceWrapper& device) {
-		// Shaders
-		device.logicalDevice.destroyShaderModule(vs);
-		device.logicalDevice.destroyShaderModule(ps);
-
-		// Render Pass
-		device.logicalDevice.destroyRenderPass(renderPass);
-		for (size_t i = 0; i < framebuffers.size(); i++) {
-			device.logicalDevice.destroyFramebuffer(framebuffers[i]);
-		}
-
-		// Stages
-		device.logicalDevice.destroyPipelineLayout(pipelineLayout);
-		device.logicalDevice.destroyPipeline(graphicsPipeline);
-
-		// descriptors
-		device.logicalDevice.destroyDescriptorSetLayout(descSetLayout);
-	}
 	void execute(vk::CommandBuffer commandBuffer, uint32_t iFrame) {
 		vk::RenderPassBeginInfo renderPassBeginInfo = vk::RenderPassBeginInfo()
 			.setRenderPass(renderPass)
@@ -62,10 +32,7 @@ public:
 
 	vk::RenderPass get_render_pass() { return renderPass; }
 private:
-	void create_shader_modules(DeviceWrapper& device) {
-		vs = create_shader_module(device, swapchain_write_vs, sizeof(swapchain_write_vs));
-		ps = create_shader_module(device, swapchain_write_ps, sizeof(swapchain_write_ps));
-	}
+	void create_shader_modules(DeviceWrapper& device);
 	void create_render_pass(DeviceWrapper& device, SwapchainWrapper& swapchain, ImageWrapper& inputImage) {
 		std::array<vk::AttachmentDescription, 1> attachments = {
 			// Output

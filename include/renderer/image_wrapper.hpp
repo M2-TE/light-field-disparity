@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vma/include/vk_mem_alloc.hpp"
 #include "stb/stb_image.h"
 
 class ImageWrapper 
