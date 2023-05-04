@@ -29,7 +29,7 @@ foreach(FILE ${HLSL_FILES})
         # compile hlsl to spir-v
         COMMAND dxc -spirv -T ${shadertype}_${shadermodel} -E main ${PROJECT_SOURCE_DIR}/src/shaders/${FILE_WE}.hlsl -Fh ${CMAKE_BINARY_DIR}/${FILE_WE}.hpp -Vn ${FILE_WE}
         # include in main shader header
-        COMMAND echo "#include <${CMAKE_BINARY_DIR}/${FILE_WE}.hpp>" >> shaders.hpp
+        COMMAND echo "#include \"${CMAKE_BINARY_DIR}/${FILE_WE}.hpp\"" >> shaders.hpp
         MAIN_DEPENDENCY ${CMAKE_BINARY_DIR}/${FILE_WE}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         VERBATIM)
