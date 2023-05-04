@@ -2,6 +2,8 @@
 Estimating disparity using light fields
 
 Current required extra libs:
-> Vulkan
 > SDL2
-> DirectX Shader Compiler
+
+> Vulkan SDK
+
+> DirectX Shader Compiler (DXC)
