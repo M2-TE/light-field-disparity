@@ -33,6 +33,8 @@ set(VMA_STATIC_VULKAN_FUNCTIONS OFF CACHE BOOL "Enable static vulkan functions f
 set(VMA_DYNAMIC_VULKAN_FUNCTIONS ON CACHE BOOL "Enable dynamic vulkan functions for VMA")
 add_subdirectory(ext/vma)
 set_target_properties(VulkanMemoryAllocator PROPERTIES CXX_STANDARD 17)
+target_include_directories(VulkanMemoryAllocator
+    PRIVATE ext/vulkan-headers/include)
 
 # compile shaders into spir-v bytecode headers
 add_subdirectory(include/shaders)
