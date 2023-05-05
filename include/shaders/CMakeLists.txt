@@ -14,11 +14,8 @@ set_source_files_properties(${HLSL_CS_FILES} PROPERTIES ShaderType "cs") # mark 
 set_source_files_properties(${HLSL_FILES} PROPERTIES ShaderModel "6_0") # the shader model to be used
 
 # create and initialize main shader header
-add_custom_command(TARGET shaders
-    COMMAND echo "#pragma once" > shaders.hpp
-    COMMAND echo "#include \"shader_utils.hpp\"" >> shaders.hpp
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    VERBATIM)
+file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/shaders.hpp "#pragma once\n")
+file(APPEND ${CMAKE_CURRENT_SOURCE_DIR}/shaders.hpp "#include \"shader_utils.hpp\"\n")
 
 # compile shaders and add them to the main header
 foreach(FILE ${HLSL_FILES})
@@ -28,9 +25,9 @@ foreach(FILE ${HLSL_FILES})
     add_custom_command(TARGET shaders
         # compile hlsl to spir-v
         COMMAND ${Vulkan_dxc_EXECUTABLE} -spirv -T ${shadertype}_${shadermodel} -E main ${PROJECT_SOURCE_DIR}/src/shaders/${FILE_WE}.hlsl -Fh ${CMAKE_BINARY_DIR}/${FILE_WE}.hpp -Vn ${FILE_WE}
-        # include in main shader header
-        COMMAND echo "#include \"${CMAKE_BINARY_DIR}/${FILE_WE}.hpp\"" >> shaders.hpp
         MAIN_DEPENDENCY ${CMAKE_BINARY_DIR}/${FILE_WE}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         VERBATIM)
+    # include in main shader header
+    file(APPEND ${CMAKE_CURRENT_SOURCE_DIR}/shaders.hpp "#include \"${CMAKE_BINARY_DIR}/${FILE_WE}.hpp\"\n")
 endforeach(FILE)
