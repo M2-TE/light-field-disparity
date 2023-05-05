@@ -8,7 +8,6 @@ class Window
 public:
 	Window() = default;
 	~Window() = default;
-	// ROF_COPY_MOVE_DELETE(Window)
 
 public:
 	void init(uint32_t width, uint32_t height) {

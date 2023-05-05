@@ -5,7 +5,6 @@ class Input
 public:
 	Input() = default;
 	~Input() = default;
-	// ROF_COPY_MOVE_DELETE(Input)
 
 public:
 	// per-frame
