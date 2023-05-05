@@ -3,17 +3,18 @@ project(light-field-disparity VERSION 0.1.0)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(CMAKE_CXX_STANDARD 17 CACHE BOOL "Set C++ Standard to 17")
 
-# let cmake find vulkan
+# vulkan libraries and dxc
 find_package(Vulkan REQUIRED COMPONENTS dxc)
+# headers located at ext/vulkan-headers
 
-# compile sdl as shared lib
+# sdl
 set(SDL_SHARED ON CACHE BOOL "Build a shared version of the library")
 set(SDL_STATIC OFF CACHE BOOL "Build a static version of the library")
 set(SDL_TEST OFF CACHE BOOL "Build the SDL3_test library")
 set(SDL3_INCLUDE_DIRS ext/sdl/include)
 add_subdirectory(ext/sdl)
 
-# compile imgui as shared lib
+# imgui
 add_library(imgui STATIC
     ext/imgui/imgui.cpp
     ext/imgui/imgui_draw.cpp
@@ -27,7 +28,7 @@ target_include_directories(imgui
     PRIVATE ${Vulkan_INCLUDE_DIRS})
 install(TARGETS imgui DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-# compile vulkan memory allocator with hpp bindings and overwrite C++ version to 17
+# vma
 set(VMA_STATIC_VULKAN_FUNCTIONS OFF CACHE BOOL "Enable static vulkan functions for VMA")
 set(VMA_DYNAMIC_VULKAN_FUNCTIONS ON CACHE BOOL "Enable dynamic vulkan functions for VMA")
 add_subdirectory(ext/vma)
@@ -38,9 +39,6 @@ add_subdirectory(include/shaders)
 
 # compile as executable
 add_executable(${PROJECT_NAME})
-add_dependencies(${PROJECT_NAME} 
-    shaders
-    imgui)
 target_precompile_headers(${PROJECT_NAME} 
     PRIVATE include/pch.hpp)
 target_sources(${PROJECT_NAME} 
@@ -49,13 +47,12 @@ target_sources(${PROJECT_NAME}
     PRIVATE src/disparity_compute.cpp
     PRIVATE src/swapchain_write.cpp)
 target_include_directories(${PROJECT_NAME}
-    PRIVATE ${Vulkan_INCLUDE_DIRS}
     PRIVATE include
     PRIVATE ext
     PRIVATE ext/imgui
     PRIVATE ext/sdl/include
-    #PRIVATE ext/vma/VulkanMemoryAllocator/include
-    PRIVATE ext/vma/include)
+    PRIVATE ext/vma/include
+    PRIVATE ext/vulkan-headers/include)
 target_link_libraries(${PROJECT_NAME} 
     ${Vulkan_LIBRARIES}
     VulkanMemoryAllocator
