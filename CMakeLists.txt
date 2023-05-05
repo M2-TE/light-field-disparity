@@ -4,7 +4,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(CMAKE_CXX_STANDARD 17)
 
 # let cmake find vulkan
-find_package(Vulkan REQUIRED)
+find_package(Vulkan REQUIRED COMPONENTS dxc)
 
 # compile sdl as shared lib
 set(SDL_SHARED ON CACHE BOOL "Build a shared version of the library")
@@ -22,15 +22,13 @@ add_library(imgui STATIC
     ext/imgui/backends/imgui_impl_sdl3.cpp
     ext/imgui/backends/imgui_impl_vulkan.cpp)
 target_include_directories(imgui
-    PUBLIC ext/imgui
-    PUBLIC ext/sdl/include) # TODO: make private?
+    PRIVATE ext/imgui
+    PRIVATE ext/sdl/include
+    PRIVATE ${Vulkan_INCLUDE_DIRS})
 install(TARGETS imgui DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
 
 # compile shaders into spir-v bytecode headers
 add_subdirectory(include/shaders)
-
-# TODO: REMOVE SDL2
 
 # compile as executable
 add_executable(${PROJECT_NAME})
@@ -45,6 +43,7 @@ target_sources(${PROJECT_NAME}
     PRIVATE src/disparity_compute.cpp
     PRIVATE src/swapchain_write.cpp)
 target_include_directories(${PROJECT_NAME}
+    PRIVATE ${Vulkan_INCLUDE_DIRS}
     PRIVATE include
     PRIVATE ext
     PRIVATE ext/imgui
