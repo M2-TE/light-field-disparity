@@ -29,12 +29,12 @@ public:
 		if (keyEvent.repeat || ImGui::GetIO().WantCaptureKeyboard) return;
 
 		switch (keyEvent.type) {
-			case SDL_KEYDOWN: {
+			case SDL_EVENT_KEY_DOWN: {
 				keysPressed.insert(keyEvent.keysym.sym);
 				keysDown.insert(keyEvent.keysym.sym);
 				break;
 			}
-			case SDL_KEYUP: {
+			case SDL_EVENT_KEY_UP: {
 				keysReleased.insert(keyEvent.keysym.sym);
 				keysDown.erase(keyEvent.keysym.sym);
 				break;
@@ -48,12 +48,12 @@ public:
 		if (ImGui::GetIO().WantCaptureMouse) return;
 
 		switch (mbEvent.type) {
-			case SDL_MOUSEBUTTONDOWN: {
+			case SDL_EVENT_MOUSE_BUTTON_DOWN: {
 				mouseButtonsPressed.insert(mbEvent.button);
 				mouseButtonsDown.insert(mbEvent.button);
 				break;
 			}
-			case SDL_MOUSEBUTTONUP: {
+			case SDL_EVENT_MOUSE_BUTTON_UP: {
 				mouseButtonsReleased.insert(mbEvent.button);
 				mouseButtonsDown.erase(mbEvent.button);
 				break;

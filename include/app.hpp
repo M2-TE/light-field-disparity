@@ -36,7 +36,7 @@ private:
 	bool update() {
 		// ImGui begin
 		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
+		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		
 		ImGui::Begin("Render Info");
@@ -56,26 +56,17 @@ private:
 		SDL_Event sdlEvent;
 		while (SDL_PollEvent(&sdlEvent)) {
 
-			ImGui_ImplSDL2_ProcessEvent(&sdlEvent);
+			ImGui_ImplSDL3_ProcessEvent(&sdlEvent);
 
 			switch (sdlEvent.type) {
-				case SDL_QUIT: return false;
+				case SDL_EVENT_QUIT: return false;
 
-				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP: input.register_mouse_button_event(sdlEvent.button); break;
-				case SDL_MOUSEMOTION: input.register_mouse_motion_event(sdlEvent.motion); break;
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				case SDL_EVENT_MOUSE_BUTTON_UP: input.register_mouse_button_event(sdlEvent.button); break;
+				case SDL_EVENT_MOUSE_MOTION: input.register_mouse_motion_event(sdlEvent.motion); break;
 
-				case SDL_KEYUP:
-				case SDL_KEYDOWN: input.register_keyboard_event(sdlEvent.key); break;
-
-				case SDL_WINDOWEVENT: {
-					//print_event(&event);
-					switch (sdlEvent.window.event) {
-						// case SDL_WINDOWEVENT_MINIMIZED:
-						// case SDL_WINDOWEVENT_FOCUS_LOST: bPaused = true; break;
-						// case SDL_WINDOWEVENT_RESTORED: bPaused = false; break;
-					}
-				}
+				case SDL_EVENT_KEY_UP:
+				case SDL_EVENT_KEY_DOWN: input.register_keyboard_event(sdlEvent.key); break;
 			}
 		}
 		return true;

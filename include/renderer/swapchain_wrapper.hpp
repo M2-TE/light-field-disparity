@@ -136,12 +136,11 @@ private:
 	void choose_extent(DeviceWrapper& device, Window& window) {
 		auto& capabilities = device.capabilities;
 
-		int width, height;
-		SDL_Vulkan_GetDrawableSize(window.get_window(), &width, &height);
+		auto windowSize = window.get_size();
 
 		extent = vk::Extent2D()
-			.setWidth(width)
-			.setHeight(height);
+			.setWidth(windowSize.first)
+			.setHeight(windowSize.second);
 	}
 	void create_swapchain(DeviceWrapper& device, Window& window) {
 		if (device.capabilities.minImageCount > nTargetSwapchainImages) nImages = device.capabilities.minImageCount;

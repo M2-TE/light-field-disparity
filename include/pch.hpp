@@ -12,21 +12,20 @@
 // load vulkan functions dynamically
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VK_API_VERSION VK_API_VERSION_1_3 // use vulkan 1.3
-// -> vulkan 1.1 is sufficient, but a spir-v bug throws some validation warnings (which are annoying)
+// -> vulkan 1.1 is sufficient, but a spir-v thing throws some validation warnings (which are annoying)
 #include <vulkan/vulkan.hpp>
 
-// Vulkan Memory Allocator with hpp bindings
+// VMA
 // -> stb-style lib implemented in pch.cpp
 
-// Tell SDL not to mess with main()
+// SDL
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
-#include <SDL2/SDL_vulkan.h>
+#include "SDL3/SDL.h"
+#include "SDL3/SDL_vulkan.h"
 
 // ImGui
 #include <imgui.h>
-#include <backends/imgui_impl_sdl2.h>
+#include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_vulkan.h>
 
 // Utils

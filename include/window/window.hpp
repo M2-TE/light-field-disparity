@@ -11,9 +11,12 @@ public:
 	// ROF_COPY_MOVE_DELETE(Window)
 
 public:
-	void init(int32_t width, int32_t height) {
+	void init(uint32_t width, uint32_t height) {
+		this->width = width;
+		this->height = height;
+
 		VMI_LOG("[Initializing] SDL window...");
-		init_sdl_window(width, height);
+		init_sdl_window();
 		SDL_version version;
 		SDL_GetVersion(&version);
 		std::string spacing = "    ";
@@ -28,13 +31,13 @@ public:
 
 		VMI_LOG("[Initializing] ImGui...");
 		ImGui::CreateContext();
-		ImGui_ImplSDL2_InitForVulkan(pWindow);
+		ImGui_ImplSDL3_InitForVulkan(pWindow);
 		ImGui::StyleColorsDark();
 		std::string imguiVer = ImGui::GetVersion();
 		VMI_LOG(spacing << "ImGui version: " << imguiVer);
 	}
 	void destroy() {
-		ImGui_ImplSDL2_Shutdown();
+		ImGui_ImplSDL3_Shutdown();
 		ImGui::DestroyContext();
 
 		SDL_DestroyWindow(pWindow);
@@ -48,19 +51,20 @@ public:
 	vk::Instance& get_vulkan_instance() { return instance; }
 	vk::SurfaceKHR& get_vulkan_surface() { return surface; }
 	SDL_Window* get_window() { return pWindow; }
+	std::pair<uint32_t, uint32_t> get_size() { return { width, height }; }
 
 private:
-	void init_sdl_window(int32_t width, int32_t height) {
+	void init_sdl_window() {
 		// Create an SDL window that supports Vulkan rendering.
 		if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) VMI_SDL_ERR();
-		pWindow = SDL_CreateWindow(WND_NAME.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-			width, height, 
+		pWindow = SDL_CreateWindow(WND_NAME.c_str(),
+			(int)width, (int)height, 
 			SDL_WINDOW_VULKAN);
 		if (pWindow == NULL) VMI_SDL_ERR();
 	}
 	void create_vulkan_instance() {
 		std::string spacing = "    ";
-		VMI_LOG(spacing << "Vulkan API version: 1.1");
+		VMI_LOG(spacing << "Vulkan API version: " << VK_API_VERSION);
 
 
 		// Look for all the available extensions
@@ -74,9 +78,9 @@ private:
 
 		// Get WSI extensions from SDL
 		uint32_t nExtensions;
-		if (!SDL_Vulkan_GetInstanceExtensions(pWindow, &nExtensions, NULL)) VMI_SDL_ERR();
+		if (!SDL_Vulkan_GetInstanceExtensions(&nExtensions, NULL)) VMI_SDL_ERR();
 		std::vector<const char*> extensions(nExtensions);
-		if (!SDL_Vulkan_GetInstanceExtensions(pWindow, &nExtensions, extensions.data())) VMI_SDL_ERR();
+		if (!SDL_Vulkan_GetInstanceExtensions(&nExtensions, extensions.data())) VMI_SDL_ERR();
 
 		// Debug Logging:
 		DEBUG_ONLY(vk::DebugUtilsMessengerCreateInfoEXT messengerInfo = Logging::SetupDebugMessenger(extensions));
@@ -126,6 +130,7 @@ private:
 	SDL_Window* pWindow = nullptr;
 	vk::Instance instance;
 	vk::SurfaceKHR surface;
+	uint32_t width, height;
 	DEBUG_ONLY(vk::DispatchLoaderDynamic dld);
 	DEBUG_ONLY(vk::DebugUtilsMessengerEXT debugMessenger);
 
