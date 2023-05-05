@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(light-field-disparity VERSION 0.1.0)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
-set(CMAKE_CXX_STANDARD 17 CACHE BOOL "Set C++ Standard to 17")
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "Set C++ Standard")
 
 # vulkan libraries and dxc
 find_package(Vulkan REQUIRED COMPONENTS dxc)
@@ -41,7 +41,7 @@ add_subdirectory(include/shaders)
 add_executable(${PROJECT_NAME})
 target_precompile_headers(${PROJECT_NAME} 
     PRIVATE include/pch.hpp)
-target_sources(${PROJECT_NAME} 
+target_sources(${PROJECT_NAME}
     PRIVATE src/pch.cpp
     PRIVATE src/main.cpp
     PRIVATE src/disparity_compute.cpp
@@ -53,6 +53,8 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE ext/sdl/include
     PRIVATE ext/vma/include
     PRIVATE ext/vulkan-headers/include)
+add_dependencies(${PROJECT_NAME}
+    shaders)
 target_link_libraries(${PROJECT_NAME} 
     ${Vulkan_LIBRARIES}
     VulkanMemoryAllocator
