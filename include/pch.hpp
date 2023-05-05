@@ -15,9 +15,6 @@
 // -> vulkan 1.1 is sufficient, but a spir-v thing throws some validation warnings (which are annoying)
 #include <vulkan/vulkan.hpp>
 
-// VMA
-// -> stb-style lib implemented in pch.cpp
-
 // SDL
 #define SDL_MAIN_HANDLED
 #include "SDL3/SDL.h"
