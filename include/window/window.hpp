@@ -40,10 +40,11 @@ public:
 		ImGui_ImplSDL3_Shutdown();
 		ImGui::DestroyContext();
 
+		instance.destroySurfaceKHR(surface);
+
 		SDL_DestroyWindow(pWindow);
 		SDL_Quit();
-
-		instance.destroySurfaceKHR(surface);
+		
 		DEBUG_ONLY(instance.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dld));
 		instance.destroy();
 	}
