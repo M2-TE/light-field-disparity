@@ -137,7 +137,7 @@ public:
         files.reserve(nFiles);
         // iterate again
         for (auto const& dirEntry : std::filesystem::directory_iterator{sandbox}) {
-            std::string file = dirEntry.path();
+            std::string file = dirEntry.path().generic_string();
             // only add file to array if it contains given substring
             if (file.find(commonFilename) != std::string::npos) {
                 files.push_back(file);
