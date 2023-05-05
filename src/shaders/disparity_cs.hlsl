@@ -45,12 +45,12 @@ float4 get_gradients(int3 texPos) {
     
     return float4(Lx, Ly, Lu, Lv);
 }
-float2 get_disparity(float4 gradients) {
+double2 get_disparity(double4 gradients) {
     // get disparity and confidence
-    float a = gradients.x * gradients.z + gradients.y * gradients.w;
-    float confidence = gradients.x * gradients.x + gradients.y * gradients.y;
-    float disparity = a / confidence;
-    return float2(disparity, confidence);
+    double a = gradients.x * gradients.z + gradients.y * gradients.w;
+    double confidence = gradients.x * gradients.x + gradients.y * gradients.y;
+    double disparity = a / confidence;
+    return double2(disparity, confidence);
 }
 
 [numthreads(1, 1, 1)]
@@ -59,7 +59,7 @@ void main(uint3 threadIdx : SV_DispatchThreadID)
     uint3 texPos = uint3(threadIdx.x, threadIdx.y, 0);
 
     float4 gradients = get_gradients(texPos);
-    float2 disparity = get_disparity(gradients);
+    double2 disparity = get_disparity((double4)gradients);
 
-    disparityTex[texPos.xy].xy = disparity.xy;
+    disparityTex[texPos.xy].xy = (float2)disparity.xy;
 }
