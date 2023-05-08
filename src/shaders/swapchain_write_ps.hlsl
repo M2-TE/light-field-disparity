@@ -14,7 +14,7 @@ float4 main(float4 inputPos : SV_Position) : SV_Target
     float4 heatCol = get_heat(disparity.x);
 
     // confidence cutoff
-    if (disparity.y < 0.00005f) heatCol = 0.0f;
+    // if (disparity.y < 0.00005f) heatCol = 0.0f;
 
     return heatCol;
 }
