@@ -53,7 +53,7 @@ double2 get_disparity(double4 gradients) {
     return double2(disparity, confidence);
 }
 
-[numthreads(1, 1, 1)]
+[numthreads(32, 32, 1)]
 void main(uint3 threadIdx : SV_DispatchThreadID)
 {  
     uint3 texPos = uint3(threadIdx.x, threadIdx.y, 0);
