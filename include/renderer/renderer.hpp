@@ -39,13 +39,9 @@ public:
 		uint32_t iSwapchainImage = swapchain.acquire_next_image(device.logicalDevice);
 		vk::CommandBuffer commandBuffer = swapchain.record_commands(device, iSwapchainImage);
 
-		static bool bComputed;
-		if (!bComputed) {
-			bComputed = true;
-			disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
-			disparityCompute.execute(commandBuffer);
-			disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
-		}
+		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
+		disparityCompute.execute(commandBuffer);
+		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 		swapchainWrite.execute(commandBuffer, iSwapchainImage);
 
 		swapchain.present(device, iSwapchainImage);

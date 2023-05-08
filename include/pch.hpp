@@ -11,8 +11,7 @@
 
 // load vulkan functions dynamically
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#define VK_API_VERSION VK_API_VERSION_1_3 // use vulkan 1.3
-// -> vulkan 1.1 is sufficient, but a spir-v thing throws some validation warnings (which are annoying)
+#define VK_API_VERSION VK_API_VERSION_1_1
 #include <vulkan/vulkan.hpp>
 
 // SDL

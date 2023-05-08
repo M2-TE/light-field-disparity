@@ -54,8 +54,9 @@ public:
 		}
 		for (const auto& extension : requiredDeviceExtensions) VMI_LOG(spacing << "- " << extension);
 
-		vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures();
-		// TODO: set specific features here
+		vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures()
+			.setShaderFloat64(true)
+			.setShaderStorageImageReadWithoutFormat(true);
 
 
 		std::vector<vk::DeviceQueueCreateInfo> queueInfos;
