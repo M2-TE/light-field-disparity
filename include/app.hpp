@@ -40,11 +40,10 @@ private:
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		
-		ImGui::Begin("Render Info");
-		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::End();
-
 		if (!poll_inputs()) return false;
+		handle_inputs();
+		draw_ui();
+
 		renderer.render(deviceManager.get_device_wrapper(), pcs);
 		
 		// ImGui end
@@ -71,6 +70,15 @@ private:
 			}
 		}
 		return true;
+	}
+	void handle_inputs() {
+		if (input.keysPressed.count(SDLK_1)) pcs.nSteps = 1;
+		if (input.keysPressed.count(SDLK_2)) pcs.nSteps = 2;
+	}
+	void draw_ui() {
+		ImGui::Begin("Render Info");
+		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
 	}
 
 private:

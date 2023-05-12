@@ -1,8 +1,8 @@
 Texture3D<float4> lightField : register(t0);
-RWTexture2D<uint4> disparityTex : register(u1);
+RWTexture2D<float2> disparityTex : register(u1);
 
 // push constant for runtime control
-struct PCS { bool bFlag; };
+struct PCS { uint nSteps; };
 [[vk::push_constant]] PCS pcs;
 
 #define BRIGHTNESS_GREY(col) dot(col, float3(0.333333f, 0.333333f, 0.333333f)); // using standard greyscale
@@ -17,16 +17,14 @@ struct PCS { bool bFlag; };
 #define PATCH_NX 3
 #define PATCH_NY 3
 
-groupshared double2 pDisparities[GROUP_NX][GROUP_NY]; // 2D disparity map
-
-double4 get_gradients(int3 threadIdx) {
+float4 get_gradients(int3 threadIdx) {
     // cam-specific filters
-    double p[] = { 0.229879f, 0.540242f, 0.229879f };
-    double d[] = { -0.425287f, 0.000000f, 0.425287f };
+    float p[] = { 0.229879f, 0.540242f, 0.229879f };
+    float d[] = { -0.425287f, 0.000000f, 0.425287f };
     
     // lightfield derivatives
-    double Lx = 0.0f, Ly = 0.0f;
-    double Lu = 0.0f, Lv = 0.0f;
+    float Lx = 0.0f, Ly = 0.0f;
+    float Lu = 0.0f, Lv = 0.0f;
 
     // iterate over 2D patch of pixels (3x3)
     for (int x = 0; x < PATCH_NX; x++)
@@ -41,7 +39,7 @@ double4 get_gradients(int3 threadIdx) {
                     int3 texOffset = int3(x - 1, y - 1, camIndex);
 
                     float3 color = lightField[threadIdx + texOffset].rgb;
-                    double luma = (double) BRIGHTNESS_GREY(color);
+                    float luma = BRIGHTNESS_GREY(color);
                     
                     // approximate derivatives using 3-tap filter
                     Lx += d[x] * p[y] * p[u] * p[v] * luma;
@@ -53,54 +51,45 @@ double4 get_gradients(int3 threadIdx) {
         }
     }
     
-    return double4(Lx, Ly, Lu, Lv);
+    return float4(Lx, Ly, Lu, Lv);
 }
-double2 get_disparity(double4 gradients) {
-    // get disparity and confidence
-    double a = gradients.x * gradients.z + gradients.y * gradients.w;
-    double confidence = gradients.x * gradients.x + gradients.y * gradients.y;
-    double disparity = a / confidence;
-    return double2(disparity, confidence);
+float2 get_disparity(float4 gradients) {
+    float a = gradients.x * gradients.z + gradients.y * gradients.w;
+    float confidence = gradients.x * gradients.x + gradients.y * gradients.y;
+    float disparity = a / confidence;
+    return float2(disparity, confidence);
 }
 
 [numthreads(GROUP_NX, GROUP_NY, 1)]
 void main(int3 threadIdx : SV_DispatchThreadID, int3 localIdx : SV_GroupThreadID)
 {
     // calc and write disparities to shared mem
-    double4 gradients = get_gradients(threadIdx);
-    double2 disparity = get_disparity(gradients);
-    pDisparities[localIdx.x][localIdx.y] = disparity;
-    GroupMemoryBarrierWithGroupSync();
+    float4 gradients = get_gradients(threadIdx);
+    float2 disparity = get_disparity(gradients);
+    disparityTex[localIdx.xy] = disparity;
+    DeviceMemoryBarrierWithGroupSync();
 
     // calculate disparity from gradients
 
     // do some wizzy shit
-    double cutoff = 0.00005;
-    if (localIdx.x != 0 && localIdx.x != GROUP_NX - 1 &&
-        localIdx.y != 0 && localIdx.y != GROUP_NY - 1) {
-        
-        double2 accumulatedDisparity = 0.0;
-        int totalAccumulations = 0;
-        // look for confident disparity in neighbouring pixels
-        for (int x = 0; x < 3; x++) {
-            for (int y = 0; y < 3; y++) {
-                // accumulate disparity if it meets threshhold
-                double2 tmpDisparity = pDisparities[localIdx.x][localIdx.y];
-                accumulatedDisparity += tmpDisparity.y > cutoff ? tmpDisparity : 0.0;
-                totalAccumulations += tmpDisparity.y > cutoff ? 1 : 0;
-            }
+    float cutoff = 0.00005f;
+    float2 accumulatedDisparity = 0.0f;
+    int totalAccumulations = 0;
+    // look for confident disparity in neighbouring pixels
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            // accumulate disparity if it meets threshhold
+            float2 tmpDisparity = disparityTex[threadIdx.xy + int2(x, y)];
+            accumulatedDisparity += tmpDisparity.y > cutoff ? tmpDisparity : 0.0f;
+            totalAccumulations += tmpDisparity.y > cutoff ? 1 : 0;
         }
-
-        // average out valid neighbours
-        accumulatedDisparity = accumulatedDisparity / (double)totalAccumulations;
-        disparity = disparity.y > cutoff ? disparity : accumulatedDisparity;
     }
 
-    if (pcs.bFlag) disparity.x = 0.0;
-
-    // write output in double precision
-    uint4 output;
-    asuint(disparity.x, output.x, output.y);
-    asuint(disparity.y, output.z, output.w);
-    disparityTex[threadIdx.xy] = output;
+    // average out valid neighbours
+    accumulatedDisparity = accumulatedDisparity / (float)totalAccumulations;
+    if (pcs.nSteps == 1) {
+        disparity = disparity.y > cutoff ? disparity : accumulatedDisparity;
+    }
+    
+    disparityTex[threadIdx.xy] = disparity;
 }

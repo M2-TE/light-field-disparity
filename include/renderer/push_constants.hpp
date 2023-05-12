@@ -8,5 +8,5 @@ struct alignas(4) PushConstants {
             .setOffset(0);
     }
 
-    bool bFlag = true;
+    uint32_t nSteps = 0;
 };
