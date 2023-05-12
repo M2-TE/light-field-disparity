@@ -94,7 +94,7 @@ private:
 		usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
 		lightFieldImage.init(device, allocator, vk::Extent3D(swapchain.get_extent(), 9), usage);
 		std::vector<int> indices = { 38, 48, 57, 40, 49, 58, 41, 50, 59 };
-		lightFieldImage.load3D(device, allocator, transferCommandPool, "light-fields/training/cotton/", "input_Cam", indices);
+		lightFieldImage.load3D(device, allocator, transferCommandPool, "benchmark/training/cotton/", "input_Cam", indices);
 		lightFieldImage.transition_layout(device, transferCommandPool, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;

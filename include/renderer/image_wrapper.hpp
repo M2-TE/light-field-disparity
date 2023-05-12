@@ -99,6 +99,10 @@ public:
         device.logicalDevice.freeCommandBuffers(commandPool, commandBuffer);
     }
     void load2D(DeviceWrapper& device, vma::Allocator& allocator, vk::CommandPool& commandPool, const char* filename) {
+        if (!std::filesystem::exists(filename)) {
+            VMI_ERR("Could not find specified image: " << filename);
+        }
+
 		int width, height, srcChannels;
 		stbi_uc* pImg = stbi_load(filename, &width, &height, &srcChannels, STBI_rgb_alpha);
 		vk::DeviceSize fileSize = width * height * STBI_rgb_alpha;
@@ -126,17 +130,21 @@ public:
             const char* foldername, const char* commonFilename, std::vector<int> imageIndices) {
 
         // iterate over all files/folders
-        const std::filesystem::path sandbox{foldername};
-        uint32_t nFiles;
+        const std::filesystem::path directory{foldername};
+        if (!std::filesystem::exists(directory)) {
+            VMI_ERR("Could not find specified directory: " << foldername);
+        }
+
+        uint32_t nFiles = 0;
         // find number of directory entires
-        for (auto const& dirEntry : std::filesystem::directory_iterator{sandbox}) { 
+        for (auto const& dirEntry : std::filesystem::directory_iterator{directory}) { 
             nFiles++; 
         }
         // reserve space in array for said entries
         std::vector<std::string> files;
         files.reserve(nFiles);
         // iterate again
-        for (auto const& dirEntry : std::filesystem::directory_iterator{sandbox}) {
+        for (auto const& dirEntry : std::filesystem::directory_iterator{directory}) {
             std::string file = dirEntry.path().generic_string();
             // only add file to array if it contains given substring
             if (file.find(commonFilename) != std::string::npos) {

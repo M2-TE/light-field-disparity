@@ -14,6 +14,14 @@ set(SDL_TEST OFF CACHE BOOL "Build the SDL3_test library")
 set(SDL3_INCLUDE_DIRS ext/sdl/include)
 add_subdirectory(ext/sdl)
 
+# vma
+set(VMA_STATIC_VULKAN_FUNCTIONS OFF CACHE BOOL "Enable static vulkan functions for VMA")
+set(VMA_DYNAMIC_VULKAN_FUNCTIONS ON CACHE BOOL "Enable dynamic vulkan functions for VMA")
+add_subdirectory(ext/vma)
+set_target_properties(VulkanMemoryAllocator PROPERTIES CXX_STANDARD 17)
+target_include_directories(VulkanMemoryAllocator
+    PRIVATE ext/vulkan-headers/include)
+
 # imgui
 add_library(imgui STATIC
     ext/imgui/imgui.cpp
@@ -26,15 +34,6 @@ target_include_directories(imgui
     PRIVATE ext/imgui
     PRIVATE ext/sdl/include
     PRIVATE ${Vulkan_INCLUDE_DIRS})
-install(TARGETS imgui DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-# vma
-set(VMA_STATIC_VULKAN_FUNCTIONS OFF CACHE BOOL "Enable static vulkan functions for VMA")
-set(VMA_DYNAMIC_VULKAN_FUNCTIONS ON CACHE BOOL "Enable dynamic vulkan functions for VMA")
-add_subdirectory(ext/vma)
-set_target_properties(VulkanMemoryAllocator PROPERTIES CXX_STANDARD 17)
-target_include_directories(VulkanMemoryAllocator
-    PRIVATE ext/vulkan-headers/include)
 
 # compile shaders into spir-v bytecode headers
 add_subdirectory(include/shaders)
@@ -62,4 +61,3 @@ target_link_libraries(${PROJECT_NAME}
     VulkanMemoryAllocator
     SDL3-shared
     imgui)
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
