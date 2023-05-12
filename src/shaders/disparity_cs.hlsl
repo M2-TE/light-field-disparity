@@ -1,6 +1,9 @@
-// [[vk::push_constant]] PCS pcs;
 Texture3D<float4> lightField : register(t0);
 RWTexture2D<uint4> disparityTex : register(u1);
+
+// push constant for runtime control
+struct PCS { bool bFlag; };
+[[vk::push_constant]] PCS pcs;
 
 #define BRIGHTNESS_GREY(col) dot(col, float3(0.333333f, 0.333333f, 0.333333f)); // using standard greyscale
 #define BRIGHTNESS_REAL(col) dot(col, float3(0.299f, 0.587f, 0.114f)); // using luminance construction
@@ -10,10 +13,11 @@ RWTexture2D<uint4> disparityTex : register(u1);
 // camera patch size
 #define CAMERA_NU 3
 #define CAMERA_NV 3
-// pixel patc size
-#define PATCH_NX CAMERA_NU
-#define PATCH_NY CAMERA_NV
-groupshared double4 pGradients[GROUP_NX][GROUP_NY]; // 2D gradient map
+// pixel patch size
+#define PATCH_NX 3
+#define PATCH_NY 3
+
+groupshared double2 pDisparities[GROUP_NX][GROUP_NY]; // 2D disparity map
 
 double4 get_gradients(int3 threadIdx) {
     // cam-specific filters
@@ -62,14 +66,35 @@ double2 get_disparity(double4 gradients) {
 [numthreads(GROUP_NX, GROUP_NY, 1)]
 void main(int3 threadIdx : SV_DispatchThreadID, int3 localIdx : SV_GroupThreadID)
 {
-    // write gradients to shared mem
-    pGradients[localIdx.x][localIdx.y] = get_gradients(threadIdx);
+    // calc and write disparities to shared mem
+    double4 gradients = get_gradients(threadIdx);
+    double2 disparity = get_disparity(gradients);
+    pDisparities[localIdx.x][localIdx.y] = disparity;
     GroupMemoryBarrierWithGroupSync();
 
-
     // calculate disparity from gradients
-    double2 disparity = get_disparity(pGradients[localIdx.x][localIdx.y]);
 
+    // do some wizzy shit
+    double cutoff = 0.00005;
+    if (localIdx.x != 0 && localIdx.x != GROUP_NX - 1 &&
+        localIdx.y != 0 && localIdx.y != GROUP_NY - 1) {
+        
+        double2 accumulatedDisparity = 0.0;
+        int totalAccumulations = 0;
+        // look for confident disparity in neighbouring pixels
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                // accumulate disparity if it meets threshhold
+                double2 tmpDisparity = pDisparities[localIdx.x][localIdx.y];
+                accumulatedDisparity += tmpDisparity.y > cutoff ? tmpDisparity : 0.0;
+                totalAccumulations += tmpDisparity.y > cutoff ? 1 : 0;
+            }
+        }
+
+        // average out valid neighbours
+        accumulatedDisparity = accumulatedDisparity / (double)totalAccumulations;
+        disparity = disparity.y > cutoff ? disparity : accumulatedDisparity;
+    }
 
     // write output in double precision
     uint4 output;
