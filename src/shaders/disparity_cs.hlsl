@@ -13,16 +13,16 @@ RWTexture2D<uint4> disparityTex : register(u1);
 // pixel patc size
 #define PATCH_NX CAMERA_NU
 #define PATCH_NY CAMERA_NV
-groupshared float pLightField[GROUP_NX][GROUP_NY][CAMERA_NU][CAMERA_NV]; // 4D light field
+groupshared double4 pGradients[GROUP_NX][GROUP_NY]; // 2D gradient map
 
-float4 get_gradients(int3 localIdx) {
+double4 get_gradients(int3 threadIdx) {
     // cam-specific filters
-    float p[] = { 0.229879f, 0.540242f, 0.229879f };
-    float d[] = { -0.425287f, 0.000000f, 0.425287f };
+    double p[] = { 0.229879f, 0.540242f, 0.229879f };
+    double d[] = { -0.425287f, 0.000000f, 0.425287f };
     
     // lightfield derivatives
-    float Lx = 0.0f, Ly = 0.0f;
-    float Lu = 0.0f, Lv = 0.0f;
+    double Lx = 0.0f, Ly = 0.0f;
+    double Lu = 0.0f, Lv = 0.0f;
 
     // iterate over 2D patch of pixels (3x3)
     for (int x = 0; x < PATCH_NX; x++)
@@ -33,9 +33,11 @@ float4 get_gradients(int3 localIdx) {
             {
                 for (int v = 0; v < CAMERA_NV; v++)
                 {
-                    int xPos = localIdx.x + x - 1;
-                    int yPos = localIdx.y + y - 1;
-                    float luma = pLightField[xPos][yPos][u][v];
+                    int camIndex = u * 3 + v;
+                    int3 texOffset = int3(x - 1, y - 1, camIndex);
+
+                    float3 color = lightField[threadIdx + texOffset].rgb;
+                    double luma = (double) BRIGHTNESS_GREY(color);
                     
                     // approximate derivatives using 3-tap filter
                     Lx += d[x] * p[y] * p[u] * p[v] * luma;
@@ -47,7 +49,7 @@ float4 get_gradients(int3 localIdx) {
         }
     }
     
-    return float4(Lx, Ly, Lu, Lv);
+    return double4(Lx, Ly, Lu, Lv);
 }
 double2 get_disparity(double4 gradients) {
     // get disparity and confidence
@@ -59,35 +61,19 @@ double2 get_disparity(double4 gradients) {
 
 [numthreads(GROUP_NX, GROUP_NY, 1)]
 void main(int3 threadIdx : SV_DispatchThreadID, int3 localIdx : SV_GroupThreadID)
-{  
-    int3 texPos = int3(threadIdx.x, threadIdx.y, 0);
-
-    // write light field texture to shared memory
-    for (int u = 0; u < CAMERA_NU; u++) {
-        for (int v = 0; v < CAMERA_NV; v++) {
-            int3 offset = int3(0, 0, v + u * CAMERA_NV);
-            float luma = BRIGHTNESS_GREY(lightField[texPos + offset].rgb);
-            pLightField[localIdx.x][localIdx.y][u][v] = luma;
-        }
-    }
-
+{
+    // write gradients to shared mem
+    pGradients[localIdx.x][localIdx.y] = get_gradients(threadIdx);
     GroupMemoryBarrierWithGroupSync();
-    // DeviceMemoryBarrierWithGroupSync();
 
-    // calculate gradients (exclkude pixels on group edge)
-    float4 gradients = 0.0f;
-    if (localIdx.x != 0 && localIdx.x != GROUP_NX - 1 && 
-        localIdx.y != 0 && localIdx.y != GROUP_NY - 1) {
-        gradients = get_gradients(localIdx);
-    }
 
     // calculate disparity from gradients
-    double2 disparity = get_disparity((double4)gradients);
+    double2 disparity = get_disparity(pGradients[localIdx.x][localIdx.y]);
 
 
     // write output in double precision
     uint4 output;
     asuint(disparity.x, output.x, output.y);
     asuint(disparity.y, output.z, output.w);
-    disparityTex[texPos.xy] = output;
+    disparityTex[threadIdx.xy] = output;
 }
