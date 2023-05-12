@@ -35,12 +35,12 @@ public:
 	}
 
 public:
-	void render(DeviceWrapper& device) {
+	void render(DeviceWrapper& device, PushConstants pcs) {
 		uint32_t iSwapchainImage = swapchain.acquire_next_image(device.logicalDevice);
 		vk::CommandBuffer commandBuffer = swapchain.record_commands(device, iSwapchainImage);
 
 		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
-		disparityCompute.execute(commandBuffer);
+		disparityCompute.execute(commandBuffer, pcs);
 		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 		swapchainWrite.execute(commandBuffer, iSwapchainImage);
 

@@ -4,6 +4,7 @@
 #include "window/input.hpp"
 #include "device/device_manager.hpp"
 #include "renderer/renderer.hpp"
+#include "renderer/push_constants.hpp"
 
 class Application
 {
@@ -44,7 +45,7 @@ private:
 		ImGui::End();
 
 		if (!poll_inputs()) return false;
-		renderer.render(deviceManager.get_device_wrapper());
+		renderer.render(deviceManager.get_device_wrapper(), pcs);
 		
 		// ImGui end
 		ImGui::EndFrame();
@@ -77,4 +78,5 @@ private:
 	Input input;
 	DeviceManager deviceManager;
 	Renderer renderer;
+	PushConstants pcs;
 };

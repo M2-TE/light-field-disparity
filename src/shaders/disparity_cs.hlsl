@@ -96,6 +96,8 @@ void main(int3 threadIdx : SV_DispatchThreadID, int3 localIdx : SV_GroupThreadID
         disparity = disparity.y > cutoff ? disparity : accumulatedDisparity;
     }
 
+    if (pcs.bFlag) disparity.x = 0.0;
+
     // write output in double precision
     uint4 output;
     asuint(disparity.x, output.x, output.y);
