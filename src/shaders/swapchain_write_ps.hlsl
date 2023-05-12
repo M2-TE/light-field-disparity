@@ -1,4 +1,4 @@
-Texture2D<float4> disparityTex : register(t0);
+Texture2D<uint4> disparityTex : register(t0);
 
 float4 get_heat(float val)
 {
@@ -10,11 +10,11 @@ float4 get_heat(float val)
 float4 main(float4 inputPos : SV_Position) : SV_Target
 {
     uint2 texPos = uint2(inputPos.x, inputPos.y);
-    float4 disparity = disparityTex[texPos];
-    float4 heatCol = get_heat(disparity.x);
+    uint4 input = disparityTex[texPos];
+    double2 disparity = asdouble(input.xz, input.yw);
 
     // confidence cutoff
-    // if (disparity.y < 0.00005f) heatCol = 0.0f;
-
+    float4 heatCol = get_heat((float)disparity.x);
+    if (disparity.y < 0.00005) heatCol = 0.0f;
     return heatCol;
 }

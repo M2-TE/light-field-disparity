@@ -1,11 +1,17 @@
 // [[vk::push_constant]] PCS pcs;
 Texture3D<float4> lightField : register(t0);
-RWTexture2D<float4> disparityTex : register(u1);
+RWTexture2D<uint4> disparityTex : register(u1);
 
 #define BRIGHTNESS_GREY(col) dot(col, float3(0.333333f, 0.333333f, 0.333333f)); // using standard greyscale
 #define BRIGHTNESS_REAL(col) dot(col, float3(0.299f, 0.587f, 0.114f)); // using luminance construction
+// compute group patch size
+#define GROUP_NX 16
+#define GROUP_NY 16
+// camera patch size
+#define CAMERA_NX 3
+#define CAMERA_NY 3
 
-float4 get_gradients(int3 texPos) {
+float4 get_gradients(uint3 localIdx) {
     // cam-specific filters
     float p[] = { 0.229879f, 0.540242f, 0.229879f };
     float d[] = { -0.425287f, 0.000000f, 0.425287f };
@@ -31,7 +37,6 @@ float4 get_gradients(int3 texPos) {
                     int3 texOffset = int3(x - pixelOffset, y - pixelOffset, camIndex);
 
                     float3 color = lightField[uint3(texPos + texOffset)].rgb;
-                    float luma = BRIGHTNESS_GREY(color);
                     
                     // approximate derivatives using 3-tap filter
                     Lx += d[x] * p[y] * p[u] * p[v] * luma;
@@ -53,13 +58,39 @@ double2 get_disparity(double4 gradients) {
     return double2(disparity, confidence);
 }
 
-[numthreads(32, 32, 1)]
-void main(uint3 threadIdx : SV_DispatchThreadID)
-{  
-    uint3 texPos = uint3(threadIdx.x, threadIdx.y, 0);
+groupshared float pLightField[GROUP_NX][GROUP_NY][CAMERA_NX][CAMERA_NY]; // 4D light field (3x3 pixel and camera patches)
 
-    float4 gradients = get_gradients(texPos);
+[numthreads(GROUP_NX, GROUP_NY, 1)] // 16x16 pixel group
+void main(uint3 threadIdx : SV_DispatchThreadID, uint3 localIdx : SV_GroupThreadID)
+{  
+    int3 texPos = int3(threadIdx.x, threadIdx.y, 0);
+
+    for (int x = 0; x < CAMERA_NX; x++) {
+        for (int y = 0; y < CAMERA_NY; y++) {
+
+            int3 offset = int3(0, 0, x + y * CAMERA_NX);
+            float color = BRIGHTNESS_GREY(lightField[texPos + offset].rgb);
+            pLightField[localIdx.x][localIdx.y][x][y] = color;
+        }
+    }
+
+    float4 gradients = get_gradients(localIdx);
     double2 disparity = get_disparity((double4)gradients);
 
-    disparityTex[texPos.xy].xy = (float2)disparity.xy;
+
+    AllMemoryBarrierWithGroupSync();
+
+    // TODO: share this data using shared memory instead
+    float2 pixelPatch[3][3];
+    for (x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            pixelPatch[x][y] = disparityTex[texPos.xy + int2(x, y)].xy;
+        }
+    }
+
+    // write output in double precision
+    uint4 output;
+    asuint(disparity.x, output.x, output.y);
+    asuint(disparity.y, output.z, output.w);
+    disparityTex[texPos.xy] = output;
 }

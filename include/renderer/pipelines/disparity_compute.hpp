@@ -12,7 +12,7 @@ public:
 
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, computePipeline);
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineLayout, 0, descSet, {});
-        commandBuffer.dispatch(512 / 32, 512 / 32, 1);
+        commandBuffer.dispatch(512 / 16, 512 / 16, 1);
     }
 
 private:

@@ -121,7 +121,7 @@ private:
 	ImguiWrapper imgui;
 
 	ImageWrapper lightFieldImage = { vk::Format::eR8G8B8A8Unorm };
-	ImageWrapper disparityImage = { vk::Format::eR32G32B32A32Sfloat };
+	ImageWrapper disparityImage = { vk::Format::eR32G32B32A32Uint };
 
 	vk::CommandPool transientCommandPool;
 	vk::CommandPool transferCommandPool;
