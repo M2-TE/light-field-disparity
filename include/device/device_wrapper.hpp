@@ -56,6 +56,7 @@ public:
 
 		vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures()
 			.setShaderFloat64(true)
+			// .setShaderInt64(true)
 			.setShaderStorageImageReadWithoutFormat(true);
 
 
