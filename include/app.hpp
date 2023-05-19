@@ -74,6 +74,13 @@ private:
 	void handle_inputs() {
 		if (input.keysPressed.count(SDLK_1)) pcs.nSteps = 1;
 		if (input.keysPressed.count(SDLK_2)) pcs.nSteps = 2;
+		if (input.keysPressed.count(SDLK_3)) pcs.nSteps = 3;
+		if (input.keysPressed.count(SDLK_4)) pcs.nSteps = 4;
+		if (input.keysPressed.count(SDLK_5)) pcs.nSteps = 5;
+		if (input.keysPressed.count(SDLK_6)) pcs.nSteps = 6;
+		if (input.keysPressed.count(SDLK_7)) pcs.nSteps = 7;
+		if (input.keysPressed.count(SDLK_8)) pcs.nSteps = 8;
+		if (input.keysPressed.count(SDLK_9)) pcs.nSteps = 9;
 	}
 	void draw_ui() {
 		ImGui::Begin("Render Info");

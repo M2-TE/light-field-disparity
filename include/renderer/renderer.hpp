@@ -40,6 +40,13 @@ public:
 		vk::CommandBuffer commandBuffer = swapchain.record_commands(device, iSwapchainImage);
 
 		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
+		pcs.iPhase = 0;
+		disparityCompute.execute(commandBuffer, pcs);
+		
+		vk::MemoryBarrier memoryBarrier = vk::MemoryBarrier().setSrcAccessMask(vk::AccessFlagBits::eShaderWrite).setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, memoryBarrier, {}, {});
+
+		pcs.iPhase = 1;
 		disparityCompute.execute(commandBuffer, pcs);
 		disparityImage.transition_layout(commandBuffer, vk::ImageLayout::eGeneral, vk::ImageLayout::eShaderReadOnlyOptimal);
 		swapchainWrite.execute(commandBuffer, iSwapchainImage);
@@ -121,7 +128,7 @@ private:
 	ImguiWrapper imgui;
 
 	ImageWrapper lightFieldImage = { vk::Format::eR8G8B8A8Unorm };
-	ImageWrapper disparityImage = { vk::Format::eR32G32Sfloat };
+	ImageWrapper disparityImage = { vk::Format::eR32G32B32A32Sfloat };
 
 	vk::CommandPool transientCommandPool;
 	vk::CommandPool transferCommandPool;
