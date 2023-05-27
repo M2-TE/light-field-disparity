@@ -4,6 +4,7 @@
 #include "window/input.hpp"
 #include "device/device_manager.hpp"
 #include "renderer/renderer.hpp"
+#include "renderer/push_constants.hpp"
 
 class Application
 {
@@ -39,12 +40,11 @@ private:
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 		
-		ImGui::Begin("Render Info");
-		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::End();
-
 		if (!poll_inputs()) return false;
-		renderer.render(deviceManager.get_device_wrapper());
+		handle_inputs();
+		draw_ui();
+
+		renderer.render(deviceManager.get_device_wrapper(), pcs);
 		
 		// ImGui end
 		ImGui::EndFrame();
@@ -71,10 +71,27 @@ private:
 		}
 		return true;
 	}
+	void handle_inputs() {
+		if (input.keysPressed.count(SDLK_1)) pcs.nSteps = 1;
+		if (input.keysPressed.count(SDLK_2)) pcs.nSteps = 2;
+		if (input.keysPressed.count(SDLK_3)) pcs.nSteps = 3;
+		if (input.keysPressed.count(SDLK_4)) pcs.nSteps = 4;
+		if (input.keysPressed.count(SDLK_5)) pcs.nSteps = 5;
+		if (input.keysPressed.count(SDLK_6)) pcs.nSteps = 6;
+		if (input.keysPressed.count(SDLK_7)) pcs.nSteps = 7;
+		if (input.keysPressed.count(SDLK_8)) pcs.nSteps = 8;
+		if (input.keysPressed.count(SDLK_9)) pcs.nSteps = 9;
+	}
+	void draw_ui() {
+		ImGui::Begin("Render Info");
+		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+	}
 
 private:
 	Window window;
 	Input input;
 	DeviceManager deviceManager;
 	Renderer renderer;
+	PushConstants pcs;
 };

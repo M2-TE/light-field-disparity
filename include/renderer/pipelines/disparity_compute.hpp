@@ -2,17 +2,19 @@
 
 #include "device/device_wrapper.hpp"
 #include "renderer/image_wrapper.hpp"
+#include "renderer/push_constants.hpp"
 
 class DisparityCompute 
 {
 public:
     void init(DeviceWrapper& device, vk::DescriptorPool descPool, ImageWrapper& inputImage, ImageWrapper& outputImage);
     void destroy(DeviceWrapper& device);
-    void execute(vk::CommandBuffer commandBuffer) {
+    void execute(vk::CommandBuffer commandBuffer, PushConstants pcs) {
 
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, computePipeline);
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipelineLayout, 0, descSet, {});
-        commandBuffer.dispatch(512 / 32, 512 / 32, 1);
+        commandBuffer.pushConstants<PushConstants>(pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, pcs);
+        commandBuffer.dispatch(512 / 16, 512 / 16, 1);
     }
 
 private:
@@ -65,8 +67,12 @@ private:
             .setImageInfo(descriptor);
         device.logicalDevice.updateDescriptorSets(descBufferWrites, {});
 
+        // push constants
+        vk::PushConstantRange pushConstantRange = PushConstants::get_range();
+
         // create pipeline layout
         vk::PipelineLayoutCreateInfo layoutInfo = vk::PipelineLayoutCreateInfo()
+            .setPushConstantRanges(pushConstantRange)
             .setSetLayouts(descSetLayout);
         pipelineLayout = device.logicalDevice.createPipelineLayout(layoutInfo);
     }

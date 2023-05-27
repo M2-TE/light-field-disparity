@@ -21,7 +21,9 @@ public:
         device.logicalDevice.destroyImageView(imageView);
     }
     
-    void transition_layout(DeviceWrapper& device, vk::CommandPool commandPool, vk::ImageLayout from, vk::ImageLayout to) {
+    void transition_layout(DeviceWrapper& device, vk::CommandPool commandPool, vk::ImageLayout from, vk::ImageLayout to, 
+        vk::PipelineStageFlagBits firstScope = vk::PipelineStageFlagBits::eTopOfPipe, 
+        vk::PipelineStageFlagBits secondScope = vk::PipelineStageFlagBits::eBottomOfPipe) {
         vk::CommandBufferAllocateInfo allocInfo = vk::CommandBufferAllocateInfo()
             .setLevel(vk::CommandBufferLevel::ePrimary)
             .setCommandPool(commandPool)
@@ -33,7 +35,7 @@ public:
 
         vk::CommandBufferBeginInfo beginInfo = vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 		commandBuffer.begin(beginInfo);
-        transition_layout(commandBuffer, from, to);
+        transition_layout(commandBuffer, from, to, firstScope, secondScope);
         commandBuffer.end();
 
         vk::SubmitInfo submitInfo = vk::SubmitInfo().setCommandBuffers(commandBuffer);
@@ -43,7 +45,10 @@ public:
         // free command buffer directly after use
         device.logicalDevice.freeCommandBuffers(commandPool, commandBuffer);
     }
-    void transition_layout(vk::CommandBuffer commandBuffer, vk::ImageLayout from, vk::ImageLayout to) {
+    void transition_layout(vk::CommandBuffer commandBuffer, vk::ImageLayout from, vk::ImageLayout to, 
+        vk::PipelineStageFlagBits firstScope = vk::PipelineStageFlagBits::eTopOfPipe, 
+        vk::PipelineStageFlagBits secondScope = vk::PipelineStageFlagBits::eBottomOfPipe) {
+        
         vk::ImageMemoryBarrier barrier = vk::ImageMemoryBarrier()
 			.setOldLayout(from)
 			.setNewLayout(to)
@@ -52,9 +57,8 @@ public:
 				.setAspectMask(vk::ImageAspectFlagBits::eColor)
 				.setBaseArrayLayer(0).setLayerCount(1)
 				.setBaseMipLevel(0).setLevelCount(1));
-		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, barrier);
+		commandBuffer.pipelineBarrier(firstScope, secondScope, {}, {}, {}, barrier);
     }
-   
    
     void load_buffer(DeviceWrapper& device, vma::Allocator& allocator, vk::CommandPool& commandPool, vk::Buffer buffer) {
         vk::CommandBufferAllocateInfo allocInfo = vk::CommandBufferAllocateInfo()

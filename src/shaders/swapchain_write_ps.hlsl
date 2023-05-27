@@ -9,12 +9,10 @@ float4 get_heat(float val)
 
 float4 main(float4 inputPos : SV_Position) : SV_Target
 {
-    uint2 texPos = uint2(inputPos.x, inputPos.y);
-    float4 disparity = disparityTex[texPos];
-    float4 heatCol = get_heat(disparity.x);
-
     // confidence cutoff
-    // if (disparity.y < 0.00005f) heatCol = 0.0f;
-
+    float4 disparity = disparityTex[(uint2)inputPos.xy];
+    // float4 heatCol = get_heat(disparity.x);
+    float4 heatCol = disparity.xxxx;
+    if (disparity.z > 0.5f) return 0.0f;
     return heatCol;
 }

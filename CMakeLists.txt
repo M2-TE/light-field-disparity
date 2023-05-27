@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.16)
-project(light-field-disparity VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.25)
+project(light-field-disparity)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "Set C++ Standard")
 
 # vulkan libraries and dxc
-find_package(Vulkan REQUIRED COMPONENTS dxc)
+find_package(Vulkan REQUIRED OPTIONAL_COMPONENTS dxc)
 # headers located at ext/vulkan-headers
 
 # sdl
@@ -56,7 +56,8 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE ext/vulkan-headers/include)
 add_dependencies(${PROJECT_NAME}
     shaders)
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
+    ${CMAKE_DL_LIBS} # prevent linking error on linux
     ${Vulkan_LIBRARIES}
     VulkanMemoryAllocator
     SDL3-shared
